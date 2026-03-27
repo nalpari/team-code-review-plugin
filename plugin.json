@@ -1,5 +1,17 @@
 {
   "name": "team-code-review-plugin",
-  "description": "Multi-agent team code review",
+  "version": "1.0.0",
+  "description": "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Gemini) for thorough PR analysis with cross-validation",
+  "author": "nalpari",
+  "license": "MIT",
+  "repository": "https://github.com/nalpari/team-code-review-plugin",
+  "keywords": [
+    "code-review",
+    "multi-agent",
+    "team-review",
+    "pr-review",
+    "cross-validation",
+    "claude"
+  ],
   "skills": ["skills/team-code-review"]
 }
