@@ -1,0 +1,5 @@
+{
+  "name": "team-code-review-plugin",
+  "description": "Multi-agent team code review",
+  "skills": ["skills/team-code-review"]
+}
