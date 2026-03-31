@@ -1,10 +1,10 @@
 # Team Code Review Plugin
 
-Multi-agent team code review plugin for Claude Code. Spawns parallel reviewers (Claude Opus + Gemini) that independently analyze your PR, cross-validate each other's findings, and post a consolidated review comment.
+Multi-agent team code review plugin for Claude Code. Spawns parallel reviewers (Claude Opus + Claude Sonnet) that independently analyze your PR, cross-validate each other's findings, and post a consolidated review comment.
 
 ## Features
 
-- **Parallel multi-model review**: Claude Opus 4.6 + Gemini 2.5 Flash review independently
+- **Parallel multi-model review**: Claude Opus 4.6 + Claude Sonnet 4.6 review independently
 - **Cross-validation**: Each reviewer verifies the other's findings to reduce false positives
 - **Consolidated output**: Leader agent synthesizes all findings into a single, structured PR comment
 - **Korean review comments**: Final review is posted in Korean with clear severity levels
@@ -41,7 +41,7 @@ In Claude Code, use any of the following:
 
 - [Claude Code](https://claude.ai/code) CLI installed
 - [GitHub CLI (`gh`)](https://cli.github.com/) authenticated
-- (Optional) [Gemini CLI (`gemini`)](https://github.com/google-gemini/gemini-cli) installed for multi-model review. Falls back to Claude Sonnet if unavailable.
+- Claude Code with access to Opus and Sonnet models
 
 ## How It Works
 
@@ -50,7 +50,7 @@ Phase 0: Gather PR diff
     |
 Phase 1: Parallel independent review
     |-- Reviewer 1 (Claude Opus 4.6)
-    |-- Reviewer 2 (Gemini 2.5 Flash)
+    |-- Reviewer 2 (Claude Sonnet 4.6)
     |
 Phase 2: Cross-validation
     |-- Reviewer 1 checks Reviewer 2's findings

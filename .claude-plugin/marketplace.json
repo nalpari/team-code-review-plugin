@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "team-code-review",
-      "description": "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Gemini) for thorough PR analysis with cross-validation",
+      "description": "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Claude Sonnet) for thorough PR analysis with cross-validation",
       "source": "./plugins/team-code-review",
       "category": "development",
       "homepage": "https://github.com/nalpari/team-code-review-plugin"

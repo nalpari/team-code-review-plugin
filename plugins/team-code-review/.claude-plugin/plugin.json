@@ -1,6 +1,6 @@
 {
   "name": "team-code-review",
-  "description": "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Gemini) for thorough PR analysis with cross-validation",
+  "description": "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Claude Sonnet) for thorough PR analysis with cross-validation",
   "version": "1.0.0",
   "author": {
     "name": "nalpari",

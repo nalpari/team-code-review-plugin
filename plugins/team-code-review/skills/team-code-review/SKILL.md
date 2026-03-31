@@ -1,6 +1,6 @@
 ---
 name: team-code-review
-description: "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Gemini) for thorough PR analysis. Use this whenever the user wants a code review of a PR, asks for multi-model or multi-perspective review, says '/team-review', mentions 'team review', or wants a comprehensive quality check before merging. Also trigger when the user emphasizes thoroughness, wants cross-validated review, or asks multiple models to review their code."
+description: "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Claude Sonnet) for thorough PR analysis. Use this whenever the user wants a code review of a PR, asks for multi-model or multi-perspective review, says '/team-review', mentions 'team review', or wants a comprehensive quality check before merging. Also trigger when the user emphasizes thoroughness, wants cross-validated review, or asks multiple models to review their code."
 ---
 
 # Team Code Review
@@ -11,7 +11,7 @@ A multi-agent code review system that forms a reviewer team with different AI mo
 
 - **Leader** (you, the main agent): Orchestrates the review, synthesizes findings, posts the final comment
 - **Reviewer 1**: Claude Opus 4.6 subagent — deep architectural and logic analysis
-- **Reviewer 2**: Gemini (via `gemini` CLI) — fresh perspective on bugs, patterns, and performance
+- **Reviewer 2**: Claude Sonnet 4.6 subagent — fresh perspective on bugs, patterns, and performance
 
 ## Review Focus Areas
 
@@ -78,38 +78,38 @@ Agent(
 )
 ```
 
-**Reviewer 2 (Gemini)** — invoke via `gemini` CLI:
+**Reviewer 2 (Claude Sonnet 4.6)** — use the Agent tool:
 
-The `gemini -p` flag requires a prompt string argument. For large diffs, pipe the diff content via stdin and pass the review instructions via `-p`:
-
-```bash
-cat /tmp/team-review-diff-focused.txt | gemini -p "You are Reviewer 2 in a code review team. Review the PR diff provided via stdin.
-
-PR Title: {title}
-PR Description: {body}
-Base: {base} → Head: {head}
-
-Focus: 1) Bugs/Logic Errors 2) Code Quality/Patterns 3) Performance
-For each finding: file path, severity (CRITICAL/WARNING/INFO), description, suggested fix.
-Note 1-2 positives. Output as structured markdown." \
-  -m gemini-2.5-flash --yolo 2>/dev/null \
-  | grep -v "^YOLO mode\|^Loaded cached\|^Registering\|^Server '\|^Scheduling\|^Executing\|^MCP context" \
-  > /tmp/team-review-gemini-result.txt
 ```
+Agent(
+  model: "sonnet",
+  run_in_background: true,
+  prompt: "You are Reviewer 2 in a multi-agent code review team. This is research-only — do NOT edit files.
 
-**Important Gemini CLI notes** (learned from testing):
-- `-p` MUST have a string value — `gemini -p "your prompt here"`, not just piping to stdin
-- Use `2>/dev/null` to suppress stderr, and pipe through `grep -v` to remove CLI noise (YOLO mode messages, MCP server registration logs)
-- The default Gemini model is `gemini-2.5-flash`. If the user specifies a different model, validate it first with a simple test: `gemini -p "test" -m <model> 2>&1 | head -3`
-- If Gemini fails (model not found, quota exceeded), proceed with Reviewer 1 only and note this in the final comment
+  Step 1: Read the diff file at /tmp/team-review-diff-focused.txt
+  Step 2: Produce your review.
+
+  PR Title: {title}
+  PR Description: {body}
+  Base: {base} → Head: {head}
+
+  Focus areas:
+  1. Bugs / Logic Errors — potential bugs, missing edge cases, race conditions, null handling
+  2. Code Quality / Patterns — SOLID violations, code smells, duplication, naming
+  3. Performance — algorithmic complexity, memory leaks, unnecessary computations
+
+  For each finding: file path, line number (approx OK), severity (CRITICAL/WARNING/INFO), description, suggested fix.
+  Note 1-2 positive aspects. Output as structured markdown."
+)
+```
 
 ### Phase 2: Cross-Check
 
 Each reviewer examines the other's findings. This catches false positives, validates real issues, and surfaces missed items.
 
 First, save both reviews to structured text files:
-- `/tmp/team-review-r1-findings.txt` — Reviewer 1's findings (from Agent result)
-- `/tmp/team-review-r2-findings.txt` — Reviewer 2's findings (from Gemini result)
+- `/tmp/team-review-r1-findings.txt` — Reviewer 1's findings (from Opus result)
+- `/tmp/team-review-r2-findings.txt` — Reviewer 2's findings (from Sonnet result)
 
 Run both cross-checks in parallel:
 
@@ -119,40 +119,38 @@ Run both cross-checks in parallel:
 Agent(
   model: "opus",
   run_in_background: true,
-  prompt: "You are Reviewer 1 (Claude Opus). Cross-check Reviewer 2 (Gemini)'s findings. Research-only — do NOT edit files.
+  prompt: "You are Reviewer 1 (Claude Opus). Cross-check Reviewer 2 (Claude Sonnet)'s findings. Research-only — do NOT edit files.
 
   Read: /tmp/team-review-r1-findings.txt (your findings)
-  Read: /tmp/team-review-r2-findings.txt (Gemini's findings)
+  Read: /tmp/team-review-r2-findings.txt (Sonnet's findings)
 
-  For each Gemini finding: AGREE, DISAGREE, or ADD CONTEXT? Brief explanation.
-  Did Gemini catch anything you missed?
-  Are any of Gemini's findings false positives? Explain why.
+  For each Sonnet finding: AGREE, DISAGREE, or ADD CONTEXT? Brief explanation.
+  Did Sonnet catch anything you missed?
+  Are any of Sonnet's findings false positives? Explain why.
   Any new issues from combined perspective?
 
   Output as structured markdown."
 )
 ```
 
-**Reviewer 2 cross-checks Reviewer 1** — via Gemini CLI:
+**Reviewer 2 cross-checks Reviewer 1** — spawn Sonnet subagent:
 
-```bash
-gemini -p "You are Reviewer 2 (Gemini). Cross-check Reviewer 1 (Claude Opus)'s findings.
+```
+Agent(
+  model: "sonnet",
+  run_in_background: true,
+  prompt: "You are Reviewer 2 (Claude Sonnet). Cross-check Reviewer 1 (Claude Opus)'s findings. Research-only — do NOT edit files.
 
-Your findings:
-$(cat /tmp/team-review-r2-findings.txt)
+  Read: /tmp/team-review-r2-findings.txt (your findings)
+  Read: /tmp/team-review-r1-findings.txt (Opus's findings)
 
-Claude Opus's findings:
-$(cat /tmp/team-review-r1-findings.txt)
+  For each Opus finding: AGREE, DISAGREE, or ADD CONTEXT? Brief explanation.
+  Did Opus catch anything you missed?
+  Are any of Opus's findings false positives? Explain why.
+  Any new issues from combined perspective?
 
-For each of Claude's findings: AGREE, DISAGREE, or ADD CONTEXT?
-Did Claude catch anything you missed?
-Are any of Claude's findings false positives?
-Any new issues from both perspectives?
-
-Output as structured markdown." \
-  -m gemini-2.5-flash --yolo 2>/dev/null \
-  | grep -v "^YOLO mode\|^Loaded cached\|^Registering\|^Server '\|^Scheduling\|^Executing\|^MCP context" \
-  > /tmp/team-review-gemini-crosscheck-result.txt
+  Output as structured markdown."
+)
 ```
 
 ### Phase 3: Leader Synthesis
@@ -188,7 +186,7 @@ Adapt sections based on actual findings — omit empty sections.
 # :mag: Team Code Review
 
 > **PR**: #{pr_number} {pr_title}
-> **Reviewers**: Claude Opus 4.6, Gemini 2.5 Flash
+> **Reviewers**: Claude Opus 4.6, Claude Sonnet 4.6
 > **Review method**: Independent parallel review + cross-validation
 
 ---
@@ -218,7 +216,7 @@ Adapt sections based on actual findings — omit empty sections.
 {크로스 체크에서 특히 중요했던 합의/이견 사항. 허위 양성으로 판정된 항목도 기록}
 
 ---
-:robot: *Generated by Team Code Review (Claude Opus 4.6 + Gemini 2.5 Flash)*
+:robot: *Generated by Team Code Review (Claude Opus 4.6 + Claude Sonnet 4.6)*
 ```
 
 ## Severity Guide
@@ -230,8 +228,8 @@ Adapt sections based on actual findings — omit empty sections.
 ## Edge Cases
 
 - **No PR found**: Ask the user which PR to review, or offer to review the current branch diff against main/master.
-- **Gemini CLI fails**: Log the error, proceed with Reviewer 1 only, and note in the final comment that only one model reviewed. Common failures: model not found (`ModelNotFoundError`), quota exceeded (`exhausted capacity`).
-- **Gemini CLI not installed**: Fall back to a second Claude subagent with `model: "sonnet"` as Reviewer 2.
+- **Reviewer 1 subagent fails**: Log the error, proceed with Reviewer 2 only, and note in the final comment that only one reviewer completed analysis.
+- **Reviewer 2 subagent fails**: Log the error, proceed with Reviewer 1 only, and note in the final comment that only one reviewer completed analysis.
 - **Very large diff (>3000 lines after filtering)**: Prioritize source files over docs/config. Note excluded files in the review.
 - **No issues found**: Still post a positive review confirming the code looks good, highlighting the positive aspects.
 - **Cross-repo PR**: Always use `--repo owner/repo` with `gh` commands when the current directory is not the target repo.
