@@ -21,7 +21,11 @@ Multi-agent team code review plugin for Claude Code. Spawns parallel reviewers (
 ## Installation
 
 ```bash
-claude plugin add https://github.com/nalpari/team-code-review-plugin.git
+# 1. Add marketplace
+claude plugin marketplace add https://github.com/nalpari/team-code-review-plugin.git
+
+# 2. Install plugin
+claude plugin install team-code-review
 ```
 
 ## Usage

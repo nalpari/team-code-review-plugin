@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "nalpari-plugins",
+  "description": "Claude Code plugins by nalpari",
+  "owner": {
+    "name": "nalpari"
+  },
+  "plugins": [
+    {
+      "name": "team-code-review",
+      "description": "Multi-agent team code review that spawns parallel reviewers (Claude Opus + Gemini) for thorough PR analysis with cross-validation",
+      "source": "./plugins/team-code-review",
+      "category": "development",
+      "homepage": "https://github.com/nalpari/team-code-review-plugin"
+    }
+  ]
+}
