@@ -28,7 +28,7 @@ claude plugin install montreal-code-review
 
 ## Usage
 
-```
+```text
 /montreal-review
 /montreal-review #42
 /montreal-review owner/repo#42
@@ -36,7 +36,7 @@ claude plugin install montreal-code-review
 
 ## Workflow
 
-```
+```text
 Phase 0: Gather PR Context
     ↓
 Phase 1: Launch 3 Reviewers in Parallel
