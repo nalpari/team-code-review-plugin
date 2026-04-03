@@ -99,10 +99,15 @@ Agent(
   3. **Architecture**: Coupling issues, abstraction leaks, broken invariants, data flow problems
 
   For each finding provide:
-  - File path and approximate line number
+  - File path and exact line number(s) from the diff (e.g., `src/auth.ts:42-45`)
   - Severity: CRITICAL / WARNING / INFO
   - Clear description of the issue
   - Suggested fix or approach
+
+  **IMPORTANT — MUST-FIX items**: For every CRITICAL finding, you MUST additionally provide:
+  - The exact file path and line number(s) where the fix is needed (e.g., `src/auth.ts:42`)
+  - A concrete, actionable description of what code must change and how (not just what is wrong)
+  - Mark these findings with a `[MUST-FIX]` prefix so the leader can extract them for the final report
 
   Also note 1-2 positive aspects of the code.
   Save your findings to /tmp/montreal-review-r1-findings.txt
@@ -129,10 +134,15 @@ Agent(
   3. **Performance**: Algorithmic complexity, memory leaks, unnecessary computations, N+1 queries, bundle size impact
 
   For each finding provide:
-  - File path and approximate line number
+  - File path and exact line number(s) from the diff (e.g., `src/utils.ts:18-22`)
   - Severity: CRITICAL / WARNING / INFO
   - Clear description of the issue
   - Suggested fix or approach
+
+  **IMPORTANT — MUST-FIX items**: For every CRITICAL finding, you MUST additionally provide:
+  - The exact file path and line number(s) where the fix is needed (e.g., `src/utils.ts:18`)
+  - A concrete, actionable description of what code must change and how (not just what is wrong)
+  - Mark these findings with a `[MUST-FIX]` prefix so the leader can extract them for the final report
 
   Also note 1-2 positive aspects of the code.
   Save your findings to /tmp/montreal-review-r2-findings.txt
@@ -160,10 +170,15 @@ Agent(
   3. **Overlooked Scenarios**: What did the developer probably not think about? Concurrency issues? Timezone problems? Unicode edge cases? Empty/null states?
 
   For each finding provide:
-  - File path and approximate line number
+  - File path and exact line number(s) from the diff (e.g., `src/api.ts:55-60`)
   - Severity: CRITICAL / WARNING / INFO
   - Attack vector or failure scenario description
   - Suggested mitigation
+
+  **IMPORTANT — MUST-FIX items**: For every CRITICAL finding, you MUST additionally provide:
+  - The exact file path and line number(s) where the fix is needed (e.g., `src/api.ts:55`)
+  - A concrete, actionable description of what code must change and how (not just what is wrong)
+  - Mark these findings with a `[MUST-FIX]` prefix so the leader can extract them for the final report
 
   Be creative and adversarial in your thinking.
   Save your findings to /tmp/montreal-review-r3-findings.txt
@@ -187,10 +202,15 @@ Agent(
   Your specialty is CodeRabbit-powered AI review. Use the /coderabbit:review skill to analyze the PR. The skill will provide its own methodology and analysis. After the CodeRabbit review completes, consolidate the results into the standard format:
 
   For each finding provide:
-  - File path and approximate line number
+  - File path and exact line number(s) from the diff (e.g., `src/config.ts:30-35`)
   - Severity: CRITICAL / WARNING / INFO
   - Clear description of the issue
   - Suggested fix or approach
+
+  **IMPORTANT — MUST-FIX items**: For every CRITICAL finding, you MUST additionally provide:
+  - The exact file path and line number(s) where the fix is needed (e.g., `src/config.ts:30`)
+  - A concrete, actionable description of what code must change and how (not just what is wrong)
+  - Mark these findings with a `[MUST-FIX]` prefix so the leader can extract them for the final report
 
   Also note 1-2 positive aspects of the code.
   Save your findings to /tmp/montreal-review-r4-findings.txt
@@ -322,6 +342,16 @@ Synthesize all eight documents (4 initial reports + 4 discussion responses) usin
 
 Prioritize findings: CRITICAL > WARNING > INFO.
 
+**Extracting MUST-FIX items**: After synthesis, collect all CRITICAL findings into a dedicated "필수 수정 사항" section. For each MUST-FIX item, ensure the following information is present:
+1. **Sequential number** (e.g., `MF-1`, `MF-2`, ...)
+2. **Exact file path and line number(s)** (e.g., `src/auth.ts:42-45`)
+3. **Current problematic code** — quote the specific line(s) from the diff
+4. **What must change** — a concrete, actionable description of the required fix
+5. **Why it must change** — brief explanation of the risk (data loss, security vulnerability, runtime error, etc.)
+6. **Confidence tag** — from the synthesis decision matrix
+
+This section appears at the top of the review (right after the summary) so the PR author can immediately see what blocks the merge.
+
 ### Phase 6: User Confirmation
 
 Before posting the review as a PR comment, present the synthesized review to the user and ask for confirmation.
@@ -369,6 +399,25 @@ Adapt sections based on actual findings — omit empty sections.
 
 ## :memo: 요약
 {1-3 문장으로 전체 변경 사항의 의도와 리뷰 결과 요약}
+
+## :rotating_light: 필수 수정 사항 (머지 전 반드시 수정)
+
+> 아래 항목은 머지를 차단하는 CRITICAL 이슈입니다. 각 항목의 파일 경로와 라인 번호를 확인하고 수정해 주세요.
+
+{CRITICAL 이슈가 없으면 이 섹션 전체를 `:white_check_mark: 필수 수정 사항 없음 — 머지 가능합니다.`로 대체}
+
+### MF-1: {이슈 제목} `[신뢰도 태그]`
+- **위치**: `{파일경로}:{라인번호}` (예: `src/auth.ts:42-45`)
+- **현재 코드**:
+  ```
+  {diff에서 해당 라인의 문제 코드 인용}
+  ```
+- **수정 내용**: {구체적으로 어떻게 변경해야 하는지 서술}
+- **사유**: {왜 수정해야 하는지 — 런타임 에러, 데이터 손실, 보안 취약점 등}
+
+### MF-2: ...
+
+---
 
 ## :bug: 버그 / 로직 오류
 
