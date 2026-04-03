@@ -57,7 +57,7 @@ gh pr diff <PR_NUMBER> --repo <OWNER/REPO> > /tmp/montreal-review-full-diff.txt
 
 Create a review team using `TeamCreate`. You (the leader) orchestrate the entire process.
 
-```
+```text
 TeamCreate(
   team_name: "montreal-review",
   description: "Montreal Code Review team for PR #{pr_number}"
@@ -68,7 +68,7 @@ TeamCreate(
 
 **Step 2-1: Create review tasks** for each reviewer:
 
-```
+```text
 TaskCreate(subject: "Review PR #{pr_number} — deep correctness & security analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for logic bugs, security vulnerabilities, and architecture issues.")
 TaskCreate(subject: "Review PR #{pr_number} — code quality & pattern analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for design patterns, readability, and performance issues.")
 TaskCreate(subject: "Review PR #{pr_number} — adversarial analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for edge cases, attack surfaces, and overlooked failure modes.")
@@ -76,16 +76,15 @@ TaskCreate(subject: "Review PR #{pr_number} — adversarial analysis", descripti
 
 **Step 2-2: Spawn 3 reviewers as teammates** — launch all three simultaneously in a single message:
 
-```
+```text
 Agent(
   name: "reviewer-1-opus",
   model: "opus",
   team_name: "montreal-review",
   prompt: "You are Reviewer 1 (Opus) on the montreal-review team. Research-only — do NOT edit files.
 
-  1. Read the team config at ~/.claude/teams/montreal-review/config.json to discover your teammates
-  2. Check TaskList and claim the correctness & security analysis task (set owner to your name)
-  3. Read the diff at /tmp/montreal-review-diff-focused.txt
+  1. Check TaskList and claim the correctness & security analysis task (set owner to your name)
+  2. Read the diff at /tmp/montreal-review-diff-focused.txt
 
   PR Title: {title}
   PR Description: {body}
@@ -114,9 +113,8 @@ Agent(
   team_name: "montreal-review",
   prompt: "You are Reviewer 2 (Sonnet) on the montreal-review team. Research-only — do NOT edit files.
 
-  1. Read the team config at ~/.claude/teams/montreal-review/config.json to discover your teammates
-  2. Check TaskList and claim the code quality & pattern analysis task (set owner to your name)
-  3. Read the diff at /tmp/montreal-review-diff-focused.txt
+  1. Check TaskList and claim the code quality & pattern analysis task (set owner to your name)
+  2. Read the diff at /tmp/montreal-review-diff-focused.txt
 
   PR Title: {title}
   PR Description: {body}
@@ -145,9 +143,8 @@ Agent(
   team_name: "montreal-review",
   prompt: "You are Reviewer 3 (Haiku) on the montreal-review team. Research-only — do NOT edit files.
 
-  1. Read the team config at ~/.claude/teams/montreal-review/config.json to discover your teammates
-  2. Check TaskList and claim the adversarial analysis task (set owner to your name)
-  3. Read the diff at /tmp/montreal-review-diff-focused.txt
+  1. Check TaskList and claim the adversarial analysis task (set owner to your name)
+  2. Read the diff at /tmp/montreal-review-diff-focused.txt
 
   PR Title: {title}
   PR Description: {body}
@@ -174,7 +171,9 @@ Agent(
 
 ### Phase 3: Collect Reports
 
-Wait for all three reviewers to complete their tasks. The leader monitors `TaskList` to track progress. Once all review tasks are marked completed, the findings are available at:
+Wait for all three reviewers to complete their tasks. The leader monitors `TaskList` to track progress. Teammates automatically send a notification when they complete work, so there is no need to poll — just wait for the notifications. If a reviewer has not completed after 5 minutes, proceed with the available reports and note the missing reviewer in the final comment.
+
+Once all review tasks are marked completed, the findings are available at:
 
 - `/tmp/montreal-review-r1-findings.txt` — Reviewer 1 (Opus) findings
 - `/tmp/montreal-review-r2-findings.txt` — Reviewer 2 (Sonnet) findings
@@ -186,7 +185,7 @@ This is the critical differentiator — instead of just merging reports, the lea
 
 **Discussion with Reviewer 1 (Opus):**
 
-```
+```text
 SendMessage(
   to: "reviewer-1-opus",
   message: "Thank you for your review. I've also received findings from two other reviewers.
@@ -206,7 +205,7 @@ SendMessage(
 
 **Discussion with Reviewer 2 (Sonnet):**
 
-```
+```text
 SendMessage(
   to: "reviewer-2-sonnet",
   message: "Thank you for your review. I've also received findings from two other reviewers.
@@ -226,7 +225,7 @@ SendMessage(
 
 **Discussion with Reviewer 3 (Haiku/Codex):**
 
-```
+```text
 SendMessage(
   to: "reviewer-3-haiku",
   message: "Thank you for your adversarial review. I've also received findings from two other reviewers.
@@ -244,7 +243,7 @@ SendMessage(
 )
 ```
 
-Wait for all discussion responses. Limit to at most one additional round per reviewer to prevent unbounded discussion loops. The leader now has:
+Wait for all discussion responses. Initiate a second round only if a reviewer's response raises a new CRITICAL finding not present in any initial report. Limit to at most one additional round per reviewer. The leader now has:
 - 3 initial review reports
 - 3 discussion-refined assessments
 
@@ -259,13 +258,14 @@ Synthesize all six documents (3 initial reports + 3 discussion responses) using 
 | 1 found it, confirmed in discussion | Include with moderate confidence | `[Single + Validated]` |
 | 1 found it, others disagreed in discussion | Include only if evidence is compelling; note the disagreement | `[Disputed]` |
 | Flagged as false positive by 2+ reviewers | Exclude unless strong override reason | — |
-| Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific | `[Single + Validated]` |
+| Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific | `[Adversarial]` |
 
 **Confidence tagging**: Each finding in the final report gets a confidence indicator:
 - `[Consensus]` — All reviewers agree
 - `[Majority]` — 2 out of 3 agree
 - `[Single + Validated]` — One reviewer found it, validated in discussion
 - `[Disputed]` — Disagreement exists, included with reasoning
+- `[Adversarial]` — Adversarial reviewer only, accepted by leader judgment
 
 Prioritize findings: CRITICAL > WARNING > INFO.
 
@@ -275,7 +275,7 @@ Before posting the review as a PR comment, present the synthesized review to the
 
 Display the formatted review and ask:
 
-```
+```text
 "리뷰 결과가 준비되었습니다. 아래 내용을 PR 코멘트로 게시할까요?
 
 [전체 리뷰 내용 표시]
@@ -370,15 +370,17 @@ After all phases are complete (whether the review was posted or cancelled), the 
 
 **Step 1: Shutdown all teammates** — send shutdown requests to each reviewer:
 
-```
+```text
 SendMessage(to: "reviewer-1-opus", message: {"type": "shutdown_request"})
 SendMessage(to: "reviewer-2-sonnet", message: {"type": "shutdown_request"})
 SendMessage(to: "reviewer-3-haiku", message: {"type": "shutdown_request"})
 ```
 
+Wait for each reviewer to acknowledge the shutdown or timeout after 30 seconds before proceeding.
+
 **Step 2: Delete the team** — once all teammates have shut down:
 
-```
+```text
 TeamDelete()
 ```
 

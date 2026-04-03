@@ -66,7 +66,7 @@ Cleanup: Shutdown Teammates & TeamDelete
 | Cross-validation | Leader spawns cross-check agents | Leader discusses with team members |
 | User confirmation | No (auto-posts) | Yes (asks before posting) |
 | Confidence tags | No | Yes ([Consensus], [Majority], etc.) |
-| Security section | No dedicated section | Dedicated section |
+| Security section | No dedicated section | Dedicated section in output |
 
 ## License
 
