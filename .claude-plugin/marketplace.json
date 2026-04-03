@@ -15,7 +15,7 @@
     },
     {
       "name": "montreal-code-review",
-      "description": "Multi-agent team code review with 3 specialized reviewers (Opus + Sonnet + Haiku/Codex adversarial) orchestrated by a leader with discussion rounds and user confirmation",
+      "description": "Multi-agent team code review with 3 specialized reviewers (Opus + Sonnet + Sonnet/Codex adversarial) orchestrated by a leader with discussion rounds and user confirmation",
       "source": "./plugins/montreal-code-review",
       "category": "development",
       "homepage": "https://github.com/nalpari/team-code-review-plugin"
