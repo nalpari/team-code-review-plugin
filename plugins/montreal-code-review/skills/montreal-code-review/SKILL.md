@@ -93,6 +93,8 @@ Agent(
   PR Description: {body}
   Base: {base} → Head: {head}
 
+  **SCOPE**: Your review MUST focus ONLY on the changes introduced in this PR diff. You may read surrounding source files for context, but do NOT report issues in code that was not added or modified in this PR. Every finding must reference lines that appear in the diff as added (+) or modified.
+
   Your specialty is deep correctness and security analysis:
   1. **Logic & Correctness**: Bugs, incorrect algorithms, missing edge cases, race conditions, null/undefined handling, off-by-one errors
   2. **Security**: Injection vulnerabilities, auth bypasses, data exposure, insecure defaults, OWASP top 10
@@ -127,6 +129,8 @@ Agent(
   PR Title: {title}
   PR Description: {body}
   Base: {base} → Head: {head}
+
+  **SCOPE**: Your review MUST focus ONLY on the changes introduced in this PR diff. You may read surrounding source files for context, but do NOT report issues in code that was not added or modified in this PR. Every finding must reference lines that appear in the diff as added (+) or modified.
 
   Your specialty is code quality and design analysis:
   1. **Design Patterns**: SOLID violations, code smells, unnecessary complexity, duplication, naming conventions
@@ -163,6 +167,8 @@ Agent(
   PR Description: {body}
   Base: {base} → Head: {head}
 
+  **SCOPE**: Your review MUST focus ONLY on the changes introduced in this PR diff. You may read surrounding source files for context, but do NOT report issues in code that was not added or modified in this PR. Every finding must reference lines that appear in the diff as added (+) or modified.
+
   If the /codex:adversarial-review skill is available, invoke it and follow its methodology. Otherwise, conduct the adversarial analysis directly using the approach below. Your specialty is adversarial analysis — think like an attacker or a malicious user:
 
   1. **Edge Cases & Failure Modes**: What inputs break this? What happens under extreme load? What if dependencies fail? What if the network is unreliable?
@@ -198,6 +204,8 @@ Agent(
   PR Title: {title}
   PR Description: {body}
   Base: {base} → Head: {head}
+
+  **SCOPE**: Your review MUST focus ONLY on the changes introduced in this PR diff. You may read surrounding source files for context, but do NOT report issues in code that was not added or modified in this PR. Every finding must reference lines that appear in the diff as added (+) or modified.
 
   Your specialty is CodeRabbit-powered AI review. Use the /coderabbit:review skill to analyze the PR. The skill will provide its own methodology and analysis. After the CodeRabbit review completes, consolidate the results into the standard format:
 
