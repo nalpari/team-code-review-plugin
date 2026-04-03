@@ -12,10 +12,18 @@ Multi-agent team code review plugin with 3 specialized reviewers orchestrated by
 - **Consensus-Based Synthesis**: Findings are tagged with confidence levels based on reviewer agreement
 - **User Confirmation**: Review results are presented for approval before posting as PR comments
 
+## Prerequisites
+
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed
+- [GitHub CLI](https://cli.github.com/) (`gh`) installed and authenticated
+- Access to Claude Opus 4.6, Sonnet 4.6, and Haiku 4.5 models
+- (Optional) [Codex adversarial-review skill](https://github.com/anthropics/codex) for enhanced adversarial analysis in Reviewer 3
+
 ## Installation
 
 ```bash
-claude plugin add --from https://github.com/nalpari/team-code-review-plugin montreal-code-review
+claude plugin marketplace add https://github.com/nalpari/team-code-review-plugin.git
+claude plugin install montreal-code-review
 ```
 
 ## Usage
@@ -50,10 +58,10 @@ Phase 6: Post PR Comment & Cleanup
 |---------|-----------------|---------------------|
 | Reviewers | 2 (Opus + Sonnet) | 3 (Opus + Sonnet + Haiku/Codex) |
 | Adversarial review | No | Yes (Codex adversarial-review) |
-| Cross-validation | Reviewers check each other | Leader discusses with each reviewer |
+| Cross-validation | Leader spawns cross-check agents | Leader discusses with original reviewers |
 | User confirmation | No (auto-posts) | Yes (asks before posting) |
 | Confidence tags | No | Yes ([Consensus], [Majority], etc.) |
-| Security section | Combined with bugs | Dedicated section |
+| Security section | No dedicated section | Dedicated section |
 
 ## License
 

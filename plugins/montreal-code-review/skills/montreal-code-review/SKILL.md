@@ -12,7 +12,7 @@ A multi-agent code review system where a leader orchestrates three specialized r
 - **Leader** (you, the main agent): Creates the agent team, orchestrates the review, discusses findings with each reviewer, synthesizes the final report, and asks the user for confirmation before posting
 - **Reviewer 1** (Opus): Deep architectural analysis — focuses on correctness, logic flaws, and security
 - **Reviewer 2** (Sonnet): Code quality and pattern analysis — focuses on design, readability, and performance
-- **Reviewer 3** (Haiku + Codex): Adversarial review — uses `/codex:adversarial-review` skill to find edge cases, attack surfaces, and overlooked failure modes
+- **Reviewer 3** (Haiku + Codex): Adversarial review — uses `/codex:adversarial-review` skill if available, otherwise conducts adversarial analysis directly to find edge cases, attack surfaces, and overlooked failure modes
 
 ## Review Focus Areas
 
@@ -50,7 +50,7 @@ gh pr diff <PR_NUMBER> --repo <OWNER/REPO> > /tmp/montreal-review-full-diff.txt
 
 1. Exclude lock files and auto-generated content: filter out `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `*.generated.*`, `*.min.js`, `*.min.css`
 2. Focus on source code: prioritize `src/`, `lib/`, `app/`, config files, and migrations
-3. If the filtered diff exceeds ~3000 lines, further trim to the most impactful files and note which files were excluded
+3. If the filtered diff exceeds ~3000 lines, further trim to the most impactful files (prioritize: auth, API routes, middleware, components, utilities, data models) and note which files were excluded
 4. Save the focused diff to `/tmp/montreal-review-diff-focused.txt`
 
 ### Phase 1: Parallel Independent Review — Launch All 3 Reviewers
@@ -134,7 +134,7 @@ Agent(
   PR Description: {body}
   Base: {base} → Head: {head}
 
-  You must invoke the /codex:adversarial-review skill and follow its methodology to conduct your review. Your specialty is adversarial analysis — think like an attacker or a malicious user:
+  If the /codex:adversarial-review skill is available, invoke it and follow its methodology. Otherwise, conduct the adversarial analysis directly using the approach below. Your specialty is adversarial analysis — think like an attacker or a malicious user:
 
   1. **Edge Cases & Failure Modes**: What inputs break this? What happens under extreme load? What if dependencies fail? What if the network is unreliable?
   2. **Attack Surfaces**: Can this be exploited? Are there injection points? Can auth be bypassed? Is there data leakage?
@@ -163,6 +163,8 @@ Wait for all three reviewers to complete. As each reviewer finishes, save their 
 This is the critical differentiator — instead of just merging reports, the leader discusses findings with each reviewer. The purpose is to validate findings, resolve ambiguities, and deepen understanding.
 
 For each reviewer, the leader sends a follow-up message using `SendMessage` to the named agent. This creates a back-and-forth dialogue.
+
+**Fallback**: If `SendMessage` to named agents is not available or fails, spawn a new Agent instance for each discussion round. Provide the new agent with the reviewer's saved findings file and the leader's questions as context, so it can respond from the reviewer's perspective.
 
 **Discussion with Reviewer 1 (Opus):**
 
@@ -232,14 +234,14 @@ Wait for all discussion responses. The leader now has:
 
 Synthesize all six documents (3 initial reports + 3 discussion responses) using this decision matrix:
 
-| Situation | Action |
-|-----------|--------|
-| All 3 reviewers agree | Include with highest confidence |
-| 2 out of 3 agree | Include with high confidence |
-| 1 found it, confirmed in discussion | Include with moderate confidence |
-| 1 found it, others disagreed in discussion | Include only if evidence is compelling; note the disagreement |
-| Flagged as false positive by 2+ reviewers | Exclude unless strong override reason |
-| Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific |
+| Situation | Action | Confidence Tag |
+|-----------|--------|---------------|
+| All 3 reviewers agree | Include with highest confidence | `[Consensus]` |
+| 2 out of 3 agree | Include with high confidence | `[Majority]` |
+| 1 found it, confirmed in discussion | Include with moderate confidence | `[Single + Validated]` |
+| 1 found it, others disagreed in discussion | Include only if evidence is compelling; note the disagreement | `[Disputed]` |
+| Flagged as false positive by 2+ reviewers | Exclude unless strong override reason | — |
+| Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific | `[Single + Validated]` |
 
 **Confidence tagging**: Each finding in the final report gets a confidence indicator:
 - `[Consensus]` — All reviewers agree
@@ -342,7 +344,7 @@ Adapt sections based on actual findings — omit empty sections.
 - **Very large diff (>3000 lines after filtering)**: Prioritize source files. Note excluded files in the review.
 - **No issues found**: Still post a positive review confirming the code looks good, highlighting the positive aspects.
 - **User declines to post**: Respect the decision. Clean up temporary files and end gracefully.
-- **Discussion reveals new critical issue**: The leader may re-engage a specific reviewer for deeper investigation before finalizing.
+- **Discussion reveals new critical issue**: The leader may re-engage a specific reviewer for deeper investigation before finalizing. Limit to at most one additional round per reviewer to prevent unbounded discussion loops.
 
 ## Agent Lifecycle Management
 
