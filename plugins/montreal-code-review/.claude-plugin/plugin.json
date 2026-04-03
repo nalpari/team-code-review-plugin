@@ -1,6 +1,6 @@
 {
   "name": "montreal-code-review",
-  "description": "Multi-agent team code review with 3 specialized reviewers (Opus + Sonnet + Sonnet/Codex adversarial) orchestrated by a leader agent. Features leader-reviewer discussion rounds and user confirmation before posting.",
+  "description": "Multi-agent team code review with 4 specialized reviewers (Opus + Sonnet + Sonnet/Codex adversarial + Sonnet/CodeRabbit) orchestrated by a leader agent. Features leader-reviewer discussion rounds and user confirmation before posting.",
   "version": "1.0.0",
   "author": {
     "name": "nalpari",

@@ -1,11 +1,11 @@
 ---
 name: montreal-code-review
-description: "Multi-agent team code review with 3 specialized reviewers (Opus deep analysis + Sonnet pattern review + Sonnet adversarial review via Codex) orchestrated by a leader who discusses findings with each reviewer before finalizing. Use this whenever the user wants a thorough multi-model code review, says '/montreal-review', mentions 'montreal review', wants adversarial or devil's advocate review, needs cross-validated PR analysis, or wants a comprehensive review with discussion rounds before posting comments. Also trigger when user asks for a '3-model review', 'multi-perspective review', or emphasizes wanting different viewpoints on their code."
+description: "Multi-agent team code review with 4 specialized reviewers (Opus deep analysis + Sonnet pattern review + Sonnet adversarial review via Codex + Sonnet CodeRabbit review) orchestrated by a leader who discusses findings with each reviewer before finalizing. Use this whenever the user wants a thorough multi-model code review, says '/montreal-review', mentions 'montreal review', wants adversarial or devil's advocate review, needs cross-validated PR analysis, or wants a comprehensive review with discussion rounds before posting comments. Also trigger when user asks for a 'multi-perspective review', or emphasizes wanting different viewpoints on their code."
 ---
 
 # Montreal Code Review
 
-A multi-agent code review system where a leader orchestrates three specialized reviewers, engages in discussion with each reviewer about their findings, and presents the consolidated results to the user for approval before posting.
+A multi-agent code review system where a leader orchestrates four specialized reviewers, engages in discussion with each reviewer about their findings, and presents the consolidated results to the user for approval before posting.
 
 ## Team Structure
 
@@ -13,6 +13,7 @@ A multi-agent code review system where a leader orchestrates three specialized r
 - **Reviewer 1** (Opus): Deep architectural analysis — focuses on correctness, logic flaws, and security
 - **Reviewer 2** (Sonnet): Code quality and pattern analysis — focuses on design, readability, and performance
 - **Reviewer 3** (Sonnet + Codex): Adversarial review — uses `/codex:adversarial-review` skill if available, otherwise conducts adversarial analysis directly to find edge cases, attack surfaces, and overlooked failure modes
+- **Reviewer 4** (Sonnet + CodeRabbit): CodeRabbit review — uses `/coderabbit:review` skill to perform an AI-powered code review with CodeRabbit's methodology
 
 ## Review Focus Areas
 
@@ -23,6 +24,7 @@ Each reviewer has a specialized lens:
 | Reviewer 1 | Opus 4.6 | Correctness, logic, security | Architecture, data flow |
 | Reviewer 2 | Sonnet 4.6 | Design patterns, readability | Performance, maintainability |
 | Reviewer 3 | Sonnet 4.6 + Codex | Edge cases, failure modes | Attack surfaces, adversarial inputs |
+| Reviewer 4 | Sonnet 4.6 + CodeRabbit | CodeRabbit AI review | Best practices, code smells, suggestions |
 
 ## Workflow
 
@@ -72,9 +74,10 @@ TeamCreate(
 TaskCreate(subject: "Review PR #{pr_number} — deep correctness & security analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for logic bugs, security vulnerabilities, and architecture issues.")
 TaskCreate(subject: "Review PR #{pr_number} — code quality & pattern analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for design patterns, readability, and performance issues.")
 TaskCreate(subject: "Review PR #{pr_number} — adversarial analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for edge cases, attack surfaces, and overlooked failure modes.")
+TaskCreate(subject: "Review PR #{pr_number} — CodeRabbit review", description: "Use /coderabbit:review skill to review the PR and analyze for best practices, code smells, and actionable suggestions.")
 ```
 
-**Step 2-2: Spawn 3 reviewers as teammates** — launch all three simultaneously in a single message:
+**Step 2-2: Spawn 4 reviewers as teammates** — launch all four simultaneously in a single message:
 
 ```text
 Agent(
@@ -167,17 +170,45 @@ Agent(
   Mark your task as completed when done.
   Then wait for further instructions from the team lead — do not shut down."
 )
+
+Agent(
+  name: "reviewer-4-sonnet",
+  model: "sonnet",
+  team_name: "montreal-review",
+  prompt: "You are Reviewer 4 (Sonnet) on the montreal-review team. Research-only — do NOT edit files.
+
+  1. Check TaskList and claim the CodeRabbit review task (set owner to your name)
+  2. Invoke the /coderabbit:review skill to review PR #{pr_number} in {owner}/{repo}
+
+  PR Title: {title}
+  PR Description: {body}
+  Base: {base} → Head: {head}
+
+  Your specialty is CodeRabbit-powered AI review. Use the /coderabbit:review skill to analyze the PR. The skill will provide its own methodology and analysis. After the CodeRabbit review completes, consolidate the results into the standard format:
+
+  For each finding provide:
+  - File path and approximate line number
+  - Severity: CRITICAL / WARNING / INFO
+  - Clear description of the issue
+  - Suggested fix or approach
+
+  Also note 1-2 positive aspects of the code.
+  Save your findings to /tmp/montreal-review-r4-findings.txt
+  Mark your task as completed when done.
+  Then wait for further instructions from the team lead — do not shut down."
+)
 ```
 
 ### Phase 3: Collect Reports
 
-Wait for all three reviewers to complete their tasks. The leader monitors `TaskList` to track progress. Teammates automatically send a notification when they complete work, so there is no need to poll — just wait for the notifications. If a reviewer has not completed after 5 minutes, proceed with the available reports and note the missing reviewer in the final comment.
+Wait for all four reviewers to complete their tasks. The leader monitors `TaskList` to track progress. Teammates automatically send a notification when they complete work, so there is no need to poll — just wait for the notifications. If a reviewer has not completed after 5 minutes, proceed with the available reports and note the missing reviewer in the final comment.
 
 Once all review tasks are marked completed, the findings are available at:
 
 - `/tmp/montreal-review-r1-findings.txt` — Reviewer 1 (Opus) findings
 - `/tmp/montreal-review-r2-findings.txt` — Reviewer 2 (Sonnet) findings
 - `/tmp/montreal-review-r3-findings.txt` — Reviewer 3 (Sonnet/Codex) findings
+- `/tmp/montreal-review-r4-findings.txt` — Reviewer 4 (Sonnet/CodeRabbit) findings
 
 ### Phase 4: Leader-Reviewer Discussion Rounds
 
@@ -188,10 +219,10 @@ This is the critical differentiator — instead of just merging reports, the lea
 ```text
 SendMessage(
   to: "reviewer-1-opus",
-  message: "Thank you for your review. I've also received findings from two other reviewers.
+  message: "Thank you for your review. I've also received findings from three other reviewers.
 
   Here is a summary of the other reviewers' findings that overlap or contrast with yours:
-  {summarize relevant findings from R2 and R3 that relate to R1's areas}
+  {summarize relevant findings from R2, R3, and R4 that relate to R1's areas}
 
   Questions:
   1. Do you agree with these overlapping/contrasting findings?
@@ -208,10 +239,10 @@ SendMessage(
 ```text
 SendMessage(
   to: "reviewer-2-sonnet",
-  message: "Thank you for your review. I've also received findings from two other reviewers.
+  message: "Thank you for your review. I've also received findings from three other reviewers.
 
   Here is a summary of the other reviewers' findings that overlap or contrast with yours:
-  {summarize relevant findings from R1 and R3 that relate to R2's areas}
+  {summarize relevant findings from R1, R3, and R4 that relate to R2's areas}
 
   Questions:
   1. Do you agree with these overlapping/contrasting findings?
@@ -228,10 +259,10 @@ SendMessage(
 ```text
 SendMessage(
   to: "reviewer-3-sonnet",
-  message: "Thank you for your adversarial review. I've also received findings from two other reviewers.
+  message: "Thank you for your adversarial review. I've also received findings from three other reviewers.
 
   Here is a summary of the other reviewers' findings that overlap or contrast with yours:
-  {summarize relevant findings from R1 and R2 that relate to R3's areas}
+  {summarize relevant findings from R1, R2, and R4 that relate to R3's areas}
 
   Questions:
   1. Do any of the other reviewers' findings reveal additional attack surfaces you didn't consider?
@@ -243,29 +274,51 @@ SendMessage(
 )
 ```
 
+**Discussion with Reviewer 4 (Sonnet/CodeRabbit):**
+
+```text
+SendMessage(
+  to: "reviewer-4-sonnet",
+  message: "Thank you for your CodeRabbit review. I've also received findings from three other reviewers.
+
+  Here is a summary of the other reviewers' findings that overlap or contrast with yours:
+  {summarize relevant findings from R1, R2, and R3 that relate to R4's areas}
+
+  Questions:
+  1. Do you agree with these overlapping/contrasting findings?
+  2. Did CodeRabbit catch anything that the other reviewers missed entirely?
+  3. Are there any findings from the others that CodeRabbit's analysis would classify differently in severity?
+  4. Which of your findings do you consider the most actionable for the PR author?
+
+  Please respond with your updated assessment."
+)
+```
+
 Wait for all discussion responses. Initiate a second round only if a reviewer's response raises a new CRITICAL finding not present in any initial report. Limit to at most one additional round per reviewer. The leader now has:
-- 3 initial review reports
-- 3 discussion-refined assessments
+- 4 initial review reports
+- 4 discussion-refined assessments
 
 ### Phase 5: Leader Synthesis
 
-Synthesize all six documents (3 initial reports + 3 discussion responses) using this decision matrix:
+Synthesize all eight documents (4 initial reports + 4 discussion responses) using this decision matrix:
 
 | Situation | Action | Confidence Tag |
 |-----------|--------|---------------|
-| All 3 reviewers agree | Include with highest confidence | `[Consensus]` |
-| 2 out of 3 agree | Include with high confidence | `[Majority]` |
+| 3+ reviewers agree | Include with highest confidence | `[Consensus]` |
+| 2 out of 4 agree | Include with high confidence | `[Majority]` |
 | 1 found it, confirmed in discussion | Include with moderate confidence | `[Single + Validated]` |
 | 1 found it, others disagreed in discussion | Include only if evidence is compelling; note the disagreement | `[Disputed]` |
 | Flagged as false positive by 2+ reviewers | Exclude unless strong override reason | — |
 | Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific | `[Adversarial]` |
+| CodeRabbit-only finding (R4) with no overlap | Include if the suggestion is actionable and specific | `[CodeRabbit]` |
 
 **Confidence tagging**: Each finding in the final report gets a confidence indicator:
-- `[Consensus]` — All reviewers agree
-- `[Majority]` — 2 out of 3 agree
+- `[Consensus]` — 3+ reviewers agree
+- `[Majority]` — 2 out of 4 agree
 - `[Single + Validated]` — One reviewer found it, validated in discussion
 - `[Disputed]` — Disagreement exists, included with reasoning
 - `[Adversarial]` — Adversarial reviewer only, accepted by leader judgment
+- `[CodeRabbit]` — CodeRabbit reviewer only, accepted by leader judgment
 
 Prioritize findings: CRITICAL > WARNING > INFO.
 
@@ -309,7 +362,7 @@ Adapt sections based on actual findings — omit empty sections.
 # :mag: Montreal Code Review
 
 > **PR**: #{pr_number} {pr_title}
-> **Reviewers**: Claude Opus 4.6, Claude Sonnet 4.6, Claude Sonnet 4.6 (+ Codex Adversarial)
+> **Reviewers**: Claude Opus 4.6, Claude Sonnet 4.6, Claude Sonnet 4.6 (+ Codex Adversarial), Claude Sonnet 4.6 (+ CodeRabbit)
 > **Review method**: Independent parallel review → Leader-reviewer discussion → Consensus synthesis
 
 ---
@@ -337,6 +390,11 @@ Adapt sections based on actual findings — omit empty sections.
 | 심각도 | 신뢰도 | 파일 | 위치 | 공격 시나리오 | 완화 방안 |
 |--------|--------|------|------|--------------|----------|
 
+## :rabbit2: CodeRabbit 리뷰
+
+| 우선순위 | 신뢰도 | 파일 | 위치 | 설명 | 제안 |
+|----------|--------|------|------|------|------|
+
 ## :white_check_mark: 잘된 점
 {긍정적 피드백 1-3개}
 
@@ -345,7 +403,7 @@ Adapt sections based on actual findings — omit empty sections.
 {허위 양성으로 판정된 항목과 그 이유}
 
 ---
-:robot: *Generated by Montreal Code Review (Opus 4.6 + Sonnet 4.6 + Sonnet 4.6/Codex)*
+:robot: *Generated by Montreal Code Review (Opus 4.6 + Sonnet 4.6 + Sonnet 4.6/Codex + Sonnet 4.6/CodeRabbit)*
 ```
 
 ## Severity Guide
@@ -359,6 +417,7 @@ Adapt sections based on actual findings — omit empty sections.
 - **No PR found**: Ask the user which PR to review, or offer to review the current branch diff against main/master.
 - **Any reviewer fails**: Log the error, proceed with the remaining reviewers, and note in the final comment which reviewers completed analysis. The discussion phase adapts — skip discussion with the failed reviewer.
 - **Codex adversarial-review skill not available**: Reviewer 3 (Sonnet) falls back to manual adversarial analysis without the Codex skill. Note this in the final report.
+- **CodeRabbit review skill not available**: Reviewer 4 (Sonnet) falls back to manual code review focusing on best practices, code smells, and actionable suggestions. Note this in the final report.
 - **Very large diff (>3000 lines after filtering)**: Prioritize source files. Note excluded files in the review.
 - **No issues found**: Still post a positive review confirming the code looks good, highlighting the positive aspects.
 - **User declines to post**: Respect the decision. Clean up temporary files and end gracefully.
@@ -374,6 +433,7 @@ After all phases are complete (whether the review was posted or cancelled), the 
 SendMessage(to: "reviewer-1-opus", message: {"type": "shutdown_request"})
 SendMessage(to: "reviewer-2-sonnet", message: {"type": "shutdown_request"})
 SendMessage(to: "reviewer-3-sonnet", message: {"type": "shutdown_request"})
+SendMessage(to: "reviewer-4-sonnet", message: {"type": "shutdown_request"})
 ```
 
 Wait for each reviewer to acknowledge the shutdown or timeout after 30 seconds before proceeding.

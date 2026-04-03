@@ -4,10 +4,11 @@ Multi-agent team code review plugin with 3 specialized reviewers orchestrated by
 
 ## Features
 
-- **3 Specialized Reviewers**: Each reviewer uses a different model and focuses on different aspects
+- **4 Specialized Reviewers**: Each reviewer focuses on different aspects
   - **Reviewer 1 (Opus 4.6)**: Deep correctness, logic, and security analysis
   - **Reviewer 2 (Sonnet 4.6)**: Code quality, design patterns, and performance
   - **Reviewer 3 (Sonnet 4.6 + Codex)**: Adversarial review — edge cases, attack surfaces, failure modes
+  - **Reviewer 4 (Sonnet 4.6 + CodeRabbit)**: CodeRabbit AI review — best practices, code smells, actionable suggestions
 - **Leader-Reviewer Discussion**: The leader discusses findings with each reviewer, cross-referencing results for validation
 - **Consensus-Based Synthesis**: Findings are tagged with confidence levels based on reviewer agreement
 - **User Confirmation**: Review results are presented for approval before posting as PR comments
@@ -42,7 +43,7 @@ Phase 0: Gather PR Context
 Phase 1: Create Agent Team (TeamCreate)
     ↓
 Phase 2: Spawn Reviewers & Assign Tasks
-    ↓ (Opus, Sonnet, Sonnet+Codex as teammates)
+    ↓ (Opus, Sonnet, Sonnet+Codex, Sonnet+CodeRabbit as teammates)
 Phase 3: Collect Reports
     ↓
 Phase 4: Leader Discusses with Each Reviewer (SendMessage)
@@ -60,7 +61,7 @@ Cleanup: Shutdown Teammates & TeamDelete
 
 | Feature | team-code-review | montreal-code-review |
 |---------|-----------------|---------------------|
-| Reviewers | 2 (Opus + Sonnet) | 3 (Opus + Sonnet + Sonnet/Codex) |
+| Reviewers | 2 (Opus + Sonnet) | 4 (Opus + Sonnet + Sonnet/Codex + Sonnet/CodeRabbit) |
 | Adversarial review | No | Yes (Codex adversarial-review) |
 | Agent architecture | Individual subagents | Agent team (TeamCreate/TeamDelete) |
 | Cross-validation | Leader spawns cross-check agents | Leader discusses with team members |
