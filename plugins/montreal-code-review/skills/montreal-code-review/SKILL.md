@@ -53,20 +53,38 @@ gh pr diff <PR_NUMBER> --repo <OWNER/REPO> > /tmp/montreal-review-full-diff.txt
 3. If the filtered diff exceeds ~3000 lines, further trim to the most impactful files (prioritize: auth, API routes, middleware, components, utilities, data models) and note which files were excluded
 4. Save the focused diff to `/tmp/montreal-review-diff-focused.txt`
 
-### Phase 1: Parallel Independent Review — Launch All 3 Reviewers
+### Phase 1: Create Agent Team
 
-Launch all three reviewers simultaneously using the Agent tool. Each reviewer works independently with no knowledge of the others.
+Create a review team using `TeamCreate`. You (the leader) orchestrate the entire process.
 
-**Reviewer 1 (Opus — Deep Analysis):**
-
+```text
+TeamCreate(
+  team_name: "montreal-review",
+  description: "Montreal Code Review team for PR #{pr_number}"
+)
 ```
+
+### Phase 2: Spawn Reviewers and Assign Tasks
+
+**Step 2-1: Create review tasks** for each reviewer:
+
+```text
+TaskCreate(subject: "Review PR #{pr_number} — deep correctness & security analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for logic bugs, security vulnerabilities, and architecture issues.")
+TaskCreate(subject: "Review PR #{pr_number} — code quality & pattern analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for design patterns, readability, and performance issues.")
+TaskCreate(subject: "Review PR #{pr_number} — adversarial analysis", description: "Read /tmp/montreal-review-diff-focused.txt and analyze for edge cases, attack surfaces, and overlooked failure modes.")
+```
+
+**Step 2-2: Spawn 3 reviewers as teammates** — launch all three simultaneously in a single message:
+
+```text
 Agent(
   name: "reviewer-1-opus",
   model: "opus",
-  run_in_background: true,
-  prompt: "You are Reviewer 1 (Opus) in a 3-person code review team. Research-only — do NOT edit files.
+  team_name: "montreal-review",
+  prompt: "You are Reviewer 1 (Opus) on the montreal-review team. Research-only — do NOT edit files.
 
-  Read the diff at /tmp/montreal-review-diff-focused.txt
+  1. Check TaskList and claim the correctness & security analysis task (set owner to your name)
+  2. Read the diff at /tmp/montreal-review-diff-focused.txt
 
   PR Title: {title}
   PR Description: {body}
@@ -84,20 +102,19 @@ Agent(
   - Suggested fix or approach
 
   Also note 1-2 positive aspects of the code.
-  Output as structured markdown with clear sections."
+  Save your findings to /tmp/montreal-review-r1-findings.txt
+  Mark your task as completed when done.
+  Then wait for further instructions from the team lead — do not shut down."
 )
-```
 
-**Reviewer 2 (Sonnet — Quality & Patterns):**
-
-```
 Agent(
   name: "reviewer-2-sonnet",
   model: "sonnet",
-  run_in_background: true,
-  prompt: "You are Reviewer 2 (Sonnet) in a 3-person code review team. Research-only — do NOT edit files.
+  team_name: "montreal-review",
+  prompt: "You are Reviewer 2 (Sonnet) on the montreal-review team. Research-only — do NOT edit files.
 
-  Read the diff at /tmp/montreal-review-diff-focused.txt
+  1. Check TaskList and claim the code quality & pattern analysis task (set owner to your name)
+  2. Read the diff at /tmp/montreal-review-diff-focused.txt
 
   PR Title: {title}
   PR Description: {body}
@@ -115,20 +132,19 @@ Agent(
   - Suggested fix or approach
 
   Also note 1-2 positive aspects of the code.
-  Output as structured markdown with clear sections."
+  Save your findings to /tmp/montreal-review-r2-findings.txt
+  Mark your task as completed when done.
+  Then wait for further instructions from the team lead — do not shut down."
 )
-```
 
-**Reviewer 3 (Haiku + Codex Adversarial Review):**
-
-```
 Agent(
   name: "reviewer-3-haiku",
   model: "haiku",
-  run_in_background: true,
-  prompt: "You are Reviewer 3 (Haiku) in a 3-person code review team. Research-only — do NOT edit files.
+  team_name: "montreal-review",
+  prompt: "You are Reviewer 3 (Haiku) on the montreal-review team. Research-only — do NOT edit files.
 
-  Read the diff at /tmp/montreal-review-diff-focused.txt
+  1. Check TaskList and claim the adversarial analysis task (set owner to your name)
+  2. Read the diff at /tmp/montreal-review-diff-focused.txt
 
   PR Title: {title}
   PR Description: {body}
@@ -146,29 +162,30 @@ Agent(
   - Attack vector or failure scenario description
   - Suggested mitigation
 
-  Be creative and adversarial in your thinking. Output as structured markdown."
+  Be creative and adversarial in your thinking.
+  Save your findings to /tmp/montreal-review-r3-findings.txt
+  Mark your task as completed when done.
+  Then wait for further instructions from the team lead — do not shut down."
 )
 ```
 
-### Phase 2: Collect Reports and Save
+### Phase 3: Collect Reports
 
-Wait for all three reviewers to complete. As each reviewer finishes, save their findings:
+Wait for all three reviewers to complete their tasks. The leader monitors `TaskList` to track progress. Teammates automatically send a notification when they complete work, so there is no need to poll — just wait for the notifications. If a reviewer has not completed after 5 minutes, proceed with the available reports and note the missing reviewer in the final comment.
+
+Once all review tasks are marked completed, the findings are available at:
 
 - `/tmp/montreal-review-r1-findings.txt` — Reviewer 1 (Opus) findings
 - `/tmp/montreal-review-r2-findings.txt` — Reviewer 2 (Sonnet) findings
 - `/tmp/montreal-review-r3-findings.txt` — Reviewer 3 (Haiku/Codex) findings
 
-### Phase 3: Leader-Reviewer Discussion Rounds
+### Phase 4: Leader-Reviewer Discussion Rounds
 
-This is the critical differentiator — instead of just merging reports, the leader discusses findings with each reviewer. The purpose is to validate findings, resolve ambiguities, and deepen understanding.
-
-For each reviewer, the leader sends a follow-up message using `SendMessage` to the named agent. This creates a back-and-forth dialogue.
-
-**Fallback**: If `SendMessage` to named agents is not available or fails, spawn a new Agent instance for each discussion round. Provide the new agent with the reviewer's saved findings file and the leader's questions as context, so it can respond from the reviewer's perspective.
+This is the critical differentiator — instead of just merging reports, the leader discusses findings with each reviewer. The reviewers are still alive as team members, so the leader sends follow-up messages using `SendMessage` to engage in back-and-forth dialogue.
 
 **Discussion with Reviewer 1 (Opus):**
 
-```
+```text
 SendMessage(
   to: "reviewer-1-opus",
   message: "Thank you for your review. I've also received findings from two other reviewers.
@@ -188,7 +205,7 @@ SendMessage(
 
 **Discussion with Reviewer 2 (Sonnet):**
 
-```
+```text
 SendMessage(
   to: "reviewer-2-sonnet",
   message: "Thank you for your review. I've also received findings from two other reviewers.
@@ -208,7 +225,7 @@ SendMessage(
 
 **Discussion with Reviewer 3 (Haiku/Codex):**
 
-```
+```text
 SendMessage(
   to: "reviewer-3-haiku",
   message: "Thank you for your adversarial review. I've also received findings from two other reviewers.
@@ -226,11 +243,11 @@ SendMessage(
 )
 ```
 
-Wait for all discussion responses. The leader now has:
+Wait for all discussion responses. Initiate a second round only if a reviewer's response raises a new CRITICAL finding not present in any initial report. Limit to at most one additional round per reviewer. The leader now has:
 - 3 initial review reports
 - 3 discussion-refined assessments
 
-### Phase 4: Leader Synthesis
+### Phase 5: Leader Synthesis
 
 Synthesize all six documents (3 initial reports + 3 discussion responses) using this decision matrix:
 
@@ -241,23 +258,24 @@ Synthesize all six documents (3 initial reports + 3 discussion responses) using 
 | 1 found it, confirmed in discussion | Include with moderate confidence | `[Single + Validated]` |
 | 1 found it, others disagreed in discussion | Include only if evidence is compelling; note the disagreement | `[Disputed]` |
 | Flagged as false positive by 2+ reviewers | Exclude unless strong override reason | — |
-| Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific | `[Single + Validated]` |
+| Adversarial-only finding (R3) with no overlap | Include if the attack scenario is realistic and specific | `[Adversarial]` |
 
 **Confidence tagging**: Each finding in the final report gets a confidence indicator:
 - `[Consensus]` — All reviewers agree
 - `[Majority]` — 2 out of 3 agree
 - `[Single + Validated]` — One reviewer found it, validated in discussion
 - `[Disputed]` — Disagreement exists, included with reasoning
+- `[Adversarial]` — Adversarial reviewer only, accepted by leader judgment
 
 Prioritize findings: CRITICAL > WARNING > INFO.
 
-### Phase 5: User Confirmation
+### Phase 6: User Confirmation
 
 Before posting the review as a PR comment, present the synthesized review to the user and ask for confirmation.
 
 Display the formatted review and ask:
 
-```
+```text
 "리뷰 결과가 준비되었습니다. 아래 내용을 PR 코멘트로 게시할까요?
 
 [전체 리뷰 내용 표시]
@@ -268,11 +286,11 @@ Display the formatted review and ask:
 ```
 
 Wait for the user's response before proceeding:
-- If the user says yes/게시: proceed to Phase 6
+- If the user says yes/게시: proceed to Phase 7
 - If the user says edit/수정: apply their requested changes and show the updated review again
-- If the user says no/취소: skip Phase 6 and go directly to cleanup
+- If the user says no/취소: skip Phase 7 and go directly to cleanup
 
-### Phase 6: Post PR Comment
+### Phase 7: Post PR Comment
 
 Only execute this phase after user confirmation.
 
@@ -346,16 +364,30 @@ Adapt sections based on actual findings — omit empty sections.
 - **User declines to post**: Respect the decision. Clean up temporary files and end gracefully.
 - **Discussion reveals new critical issue**: The leader may re-engage a specific reviewer for deeper investigation before finalizing. Limit to at most one additional round per reviewer to prevent unbounded discussion loops.
 
-## Agent Lifecycle Management
+## Agent Team Lifecycle Management
 
-After all phases are complete (whether the review was posted or cancelled):
+After all phases are complete (whether the review was posted or cancelled), the leader must gracefully shut down the team:
 
-1. All named agents (`reviewer-1-opus`, `reviewer-2-sonnet`, `reviewer-3-haiku`) have completed their work through the discussion rounds
-2. No further messages will be sent to them
-3. Clean up all temporary files:
+**Step 1: Shutdown all teammates** — send shutdown requests to each reviewer:
+
+```text
+SendMessage(to: "reviewer-1-opus", message: {"type": "shutdown_request"})
+SendMessage(to: "reviewer-2-sonnet", message: {"type": "shutdown_request"})
+SendMessage(to: "reviewer-3-haiku", message: {"type": "shutdown_request"})
+```
+
+Wait for each reviewer to acknowledge the shutdown or timeout after 30 seconds before proceeding.
+
+**Step 2: Delete the team** — once all teammates have shut down:
+
+```text
+TeamDelete()
+```
+
+This removes the team config (`~/.claude/teams/montreal-review/`) and task list (`~/.claude/tasks/montreal-review/`).
+
+**Step 3: Clean up temporary files:**
 
 ```bash
 rm -f /tmp/montreal-review-*.txt
 ```
-
-The agents are naturally released when the conversation moves on — there is no explicit "kill" needed, but the leader confirms all agent interactions are finalized before cleanup.

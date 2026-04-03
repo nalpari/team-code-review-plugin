@@ -39,17 +39,21 @@ claude plugin install montreal-code-review
 ```text
 Phase 0: Gather PR Context
     ↓
-Phase 1: Launch 3 Reviewers in Parallel
-    ↓ (Opus, Sonnet, Haiku+Codex)
-Phase 2: Collect Reports
+Phase 1: Create Agent Team (TeamCreate)
     ↓
-Phase 3: Leader Discusses with Each Reviewer
+Phase 2: Spawn Reviewers & Assign Tasks
+    ↓ (Opus, Sonnet, Haiku+Codex as teammates)
+Phase 3: Collect Reports
+    ↓
+Phase 4: Leader Discusses with Each Reviewer (SendMessage)
     ↓ (cross-reference, validate, refine)
-Phase 4: Synthesize with Confidence Tags
+Phase 5: Synthesize with Confidence Tags
     ↓ ([Consensus], [Majority], [Single + Validated], [Disputed])
-Phase 5: User Confirmation
+Phase 6: User Confirmation
     ↓ (approve / edit / cancel)
-Phase 6: Post PR Comment & Cleanup
+Phase 7: Post PR Comment
+    ↓
+Cleanup: Shutdown Teammates & TeamDelete
 ```
 
 ## Differences from team-code-review
@@ -58,10 +62,11 @@ Phase 6: Post PR Comment & Cleanup
 |---------|-----------------|---------------------|
 | Reviewers | 2 (Opus + Sonnet) | 3 (Opus + Sonnet + Haiku/Codex) |
 | Adversarial review | No | Yes (Codex adversarial-review) |
-| Cross-validation | Leader spawns cross-check agents | Leader discusses with original reviewers |
+| Agent architecture | Individual subagents | Agent team (TeamCreate/TeamDelete) |
+| Cross-validation | Leader spawns cross-check agents | Leader discusses with team members |
 | User confirmation | No (auto-posts) | Yes (asks before posting) |
 | Confidence tags | No | Yes ([Consensus], [Majority], etc.) |
-| Security section | No dedicated section | Dedicated section |
+| Security section | No dedicated section | Dedicated section in output |
 
 ## License
 
