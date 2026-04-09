@@ -1,0 +1,9 @@
+{
+  "name": "chicago-code-review",
+  "description": "Multi-agent code review with 6+ expert personas (Architect, Security, Performance, QA, Craftsman, DevOps) analyzing code in parallel. An orchestrator synthesizes findings into a unified report with severity ratings and action plans.",
+  "version": "1.0.0",
+  "author": {
+    "name": "nalpari",
+    "url": "https://github.com/nalpari"
+  }
+}
