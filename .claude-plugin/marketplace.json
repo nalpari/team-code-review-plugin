@@ -19,6 +19,13 @@
       "source": "./plugins/montreal-code-review",
       "category": "development",
       "homepage": "https://github.com/nalpari/team-code-review-plugin"
+    },
+    {
+      "name": "chicago-code-review",
+      "description": "Multi-agent code review with 6+ expert personas (Architect, Security, Performance, QA, Craftsman, DevOps) analyzing code in parallel with trade-off analysis and severity-based prioritization",
+      "source": "./plugins/chicago-code-review",
+      "category": "development",
+      "homepage": "https://github.com/nalpari/team-code-review-plugin"
     }
   ]
 }
