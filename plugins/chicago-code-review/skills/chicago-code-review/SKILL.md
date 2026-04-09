@@ -2,8 +2,8 @@
 name: chicago-code-review
 description: >
   멀티 에이전트를 활용해 다양한 전문가 역할의 시각으로 코드를 종합 리뷰하는 스킬.
-  PR 코드, diff, 파일 단위 코드를 입력받아 아키텍트·시큐리티·퍼포먼스·QA·코드품질·DevOps
-  등 복수의 전문가 페르소나가 병렬로 분석하고 통합 리포트를 생성한다.
+  PR 코드, diff, 파일 단위 코드를 입력받아 아키텍트·시큐리티·퍼포먼스·QA·코드품질·DevOps·CodeRabbit
+  등 복수의 전문가 페르소나가 병렬로 분석하고, 오케스트레이터가 최종 검증·필터링 후 통합 리포트를 생성한다.
   "코드 리뷰해줘", "PR 리뷰", "이 코드 점검해줘", "멀티 관점으로 리뷰" 등
   코드 품질·안전성·성능·운영 안정성에 대한 종합 검토 요청이 들어오면 항상 이 스킬을 사용한다.
   단순 코드 설명이나 단일 이슈 질문에는 사용하지 않는다.
@@ -29,10 +29,11 @@ description: >
         │
         ├──▶ 🏗️ Architect      ─┐
         ├──▶ 🔒 Security       ─┤
-        ├──▶ ⚡ Performance    ─┼──▶ [오케스트레이터] 결과 통합
-        ├──▶ 🧪 QA Engineer    ─┤       │
-        ├──▶ 📖 Craftsman      ─┤       ▼
-        └──▶ 🔄 DevOps         ─┘  최종 리뷰 리포트
+        ├──▶ ⚡ Performance    ─┤
+        ├──▶ 🧪 QA Engineer    ─┼──▶ [오케스트레이터] 결과 통합 & 최종 검증
+        ├──▶ 📖 Craftsman      ─┤       │
+        ├──▶ 🔄 DevOps         ─┤       ▼
+        └──▶ 🐰 CodeRabbit     ─┘  최종 리뷰 리포트
 ```
 
 ---
@@ -94,15 +95,16 @@ PR이 아닌 파일 경로나 코드 스니펫이 제공된 경우:
 | 4 | 🧪 QA Engineer | ✅ |
 | 5 | 📖 Code Craftsman | ✅ |
 | 6 | 🔄 DevOps Engineer | ✅ |
+| 7 | 🐰 CodeRabbit Reviewer | ✅ |
 
 선택적 역할은 코드 성격에 따라 자동 활성화한다:
 
 | # | 역할 | 활성화 조건 |
 |---|------|------------|
-| 7 | 💰 Business Analyst | 도메인 로직이 복잡한 코드 (ERP, 커머스, 정산, 재고 등) |
-| 8 | 🌐 Frontend Expert | API 계약 변경, 프론트엔드 연동 영향이 있는 코드 |
-| 9 | 📊 Data Steward | DB 스키마 변경, 마이그레이션, 대용량 데이터 처리 |
-| 10 | 👶 Junior Developer | 팀 온보딩 코드, 핵심 비즈니스 로직, 복잡한 알고리즘 |
+| 8 | 💰 Business Analyst | 도메인 로직이 복잡한 코드 (ERP, 커머스, 정산, 재고 등) |
+| 9 | 🌐 Frontend Expert | API 계약 변경, 프론트엔드 연동 영향이 있는 코드 |
+| 10 | 📊 Data Steward | DB 스키마 변경, 마이그레이션, 대용량 데이터 처리 |
+| 11 | 👶 Junior Developer | 팀 온보딩 코드, 핵심 비즈니스 로직, 복잡한 알고리즘 |
 
 사용자가 특정 역할만 지정한 경우(예: "Security와 Performance 관점으로만 리뷰해줘"), 지정된 역할만 활성화한다.
 
@@ -364,11 +366,46 @@ Agent(
 )
 ```
 
+#### 🐰 7. CodeRabbit Reviewer (The AI Auditor)
+
+```
+Agent(
+  name: "coderabbit",
+  subagent_type: "coderabbit:code-reviewer",
+  prompt: "당신은 CodeRabbit AI 리뷰어입니다. Research-only — 파일을 수정하지 마세요.
+
+  이 코드 변경 사항에 대해 CodeRabbit의 AI 코드 리뷰를 수행하세요.
+  다른 전문가 에이전트(Architect, Security, Performance 등)가 동시에 리뷰 중이므로,
+  CodeRabbit 고유의 패턴 기반 분석에 집중하세요.
+
+  **SCOPE**: 리뷰는 반드시 이 PR diff에서 추가(+) 또는 수정된 라인에만 집중하세요.
+
+  **분석 대상 코드:**
+  /tmp/chicago-review-diff-focused.txt 또는 /tmp/chicago-review-code-input.txt 파일을 읽으세요.
+
+  **프로젝트 컨텍스트:**
+  [언어/프레임워크, 도메인, 변경 목적]
+
+  다음 관점에서 분석하세요:
+  - 버그 및 로직 오류 탐지
+  - 보안 취약점 패턴
+  - 코드 품질 및 모범 사례 위반
+  - 잠재적 런타임 에러
+  - 의존성 및 호환성 문제
+
+  **출력 형식:**
+  - 각 이슈는 심각도 레이블(🔴🟠🟡🟢) + 위치(파일명:줄번호) + 설명 + 개선안 순서로 작성
+  - 이슈가 없는 항목은 '✅ 이상 없음'으로 표기
+  - 총 이슈 수를 마지막에 요약
+  - 분석 결과를 /tmp/chicago-review-coderabbit-findings.txt에 저장"
+)
+```
+
 ### 선택적 역할 프롬프트
 
 선택적 역할이 활성화된 경우, 동일한 패턴으로 추가 서브에이전트를 함께 병렬 실행한다.
 
-#### 💰 7. Business Analyst (The Translator)
+#### 💰 8. Business Analyst (The Translator)
 
 ```
 Agent(
@@ -390,7 +427,7 @@ Agent(
 )
 ```
 
-#### 🌐 8. Frontend Expert (The UX Guardian)
+#### 🌐 9. Frontend Expert (The UX Guardian)
 
 ```
 Agent(
@@ -412,7 +449,7 @@ Agent(
 )
 ```
 
-#### 📊 9. Data Steward
+#### 📊 10. Data Steward
 
 ```
 Agent(
@@ -434,7 +471,7 @@ Agent(
 )
 ```
 
-#### 👶 10. Junior Developer (The Learner)
+#### 👶 11. Junior Developer (The Learner)
 
 ```
 Agent(
@@ -467,6 +504,7 @@ Agent(
 - `/tmp/chicago-review-qa-findings.txt`
 - `/tmp/chicago-review-craftsman-findings.txt`
 - `/tmp/chicago-review-devops-findings.txt`
+- `/tmp/chicago-review-coderabbit-findings.txt`
 - (선택적) `/tmp/chicago-review-business-findings.txt`
 - (선택적) `/tmp/chicago-review-frontend-findings.txt`
 - (선택적) `/tmp/chicago-review-data-findings.txt`
@@ -474,7 +512,9 @@ Agent(
 
 ---
 
-## Phase 4: 오케스트레이터 — 결과 통합 & 충돌 분석
+## Phase 4: 오케스트레이터 — 최종 검증 & 통합 리포팅
+
+**중요**: 오케스트레이터는 서브에이전트의 결과를 그대로 전달하지 않는다. 반드시 전체 결과를 종합적으로 검토하고, 적합성을 검증한 후 최종 리포트를 작성한다.
 
 ### 4-1. 중복 제거
 
@@ -487,13 +527,37 @@ Agent(
 예: "Architect는 레이어 분리를 권고하지만, Performance는 직접 쿼리가 효율적이라 함
 → 현재 트래픽 규모에서는 가독성 우선, 성능 이슈 시 캐시 계층 추가 권장"
 
-### 4-3. 심각도 집계
+### 4-3. 오케스트레이터 최종 검증 (Final Validation)
 
-전체 이슈를 심각도별로 집계한다:
+오케스트레이터는 서브에이전트의 모든 결과를 다음 기준으로 최종 점검한다:
+
+#### 적합성 검증
+- **오탐(False Positive) 필터링**: 실제 코드 컨텍스트와 맞지 않는 이슈를 걸러낸다. 예를 들어, 프레임워크가 이미 처리하는 문제를 에이전트가 지적한 경우 제외한다.
+- **심각도 재조정**: 에이전트가 과대 또는 과소 평가한 심각도를 프로젝트 컨텍스트에 맞게 조정한다. 조정 시 원래 심각도와 조정 사유를 병기한다.
+- **실행 가능성 확인**: 제안된 수정안이 실제로 적용 가능한지, 다른 코드와 충돌하지 않는지 확인한다.
+
+#### 일관성 검증
+- **프로젝트 컨벤션 부합 여부**: 이슈와 수정 제안이 프로젝트의 기존 패턴·컨벤션과 일치하는지 확인한다.
+- **에이전트 간 정합성**: 한 에이전트의 수정 제안이 다른 에이전트의 지적 사항과 모순되지 않는지 교차 검증한다.
+
+#### 우선순위 정리
+- **실질적 영향도 기반 순위 조정**: 단순 심각도뿐 아니라, 변경 범위·영향 받는 사용자 수·수정 비용을 고려하여 최종 우선순위를 결정한다.
+- **액션 아이템 구체화**: 모호한 제안은 구체적인 수정 방향으로 재작성한다.
+
+### 4-4. 심각도 집계
+
+최종 검증을 거친 이슈만을 심각도별로 집계한다:
 - 🔴 CRITICAL: N건
 - 🟠 HIGH: N건
 - 🟡 MEDIUM: N건
 - 🟢 LOW: N건
+
+### 4-5. 오케스트레이터 총평
+
+오케스트레이터는 전체 리뷰를 종합하여 다음을 포함하는 총평을 작성한다:
+- 코드 변경의 전체적인 품질 평가 (한 줄)
+- 가장 주의가 필요한 영역 1-3개
+- 머지 가능 여부에 대한 오케스트레이터의 최종 판단 (승인 / 조건부 승인 / 수정 필요)
 
 ---
 
@@ -555,7 +619,7 @@ rm -f /tmp/chicago-review-*.txt
 
 ## 최종 리포트 구조
 
-오케스트레이터는 각 에이전트의 결과를 다음 형식으로 통합한다:
+오케스트레이터는 각 에이전트의 결과를 최종 검증한 후 다음 형식으로 통합한다:
 
 ```markdown
 # 🔍 Chicago Code Review
@@ -563,7 +627,8 @@ rm -f /tmp/chicago-review-*.txt
 ## 📋 리뷰 요약
 - **리뷰 대상**: [파일명 / PR #{pr_number} {pr_title}]
 - **참여 에이전트**: [활성화된 역할 목록]
-- **전체 평가**: [한 줄 총평]
+- **전체 평가**: [오케스트레이터 최종 총평 — 한 줄]
+- **머지 판단**: [✅ 승인 / ⚠️ 조건부 승인 / ❌ 수정 필요]
 - 🔴 Critical: N건 / 🟠 High: N건 / 🟡 Medium: N건 / 🟢 Low: N건
 
 ---
@@ -603,6 +668,9 @@ rm -f /tmp/chicago-review-*.txt
 ### 🔄 DevOps 관점
 {DevOps 에이전트의 상세 분석 결과}
 
+### 🐰 CodeRabbit 관점
+{CodeRabbit 에이전트의 AI 패턴 분석 결과}
+
 {선택적 역할이 활성화된 경우 해당 섹션 추가}
 
 ---
@@ -619,13 +687,23 @@ rm -f /tmp/chicago-review-*.txt
 
 ---
 
+## 🎯 오케스트레이터 최종 검증 노트
+
+{오케스트레이터가 검증 과정에서 필터링/조정한 내용}
+- **필터링된 이슈**: [오탐으로 판단하여 제외한 이슈가 있으면 사유와 함께 기록]
+- **심각도 조정**: [원래 심각도 → 조정 심각도 + 사유]
+- **주의 영역**: [가장 주의가 필요한 1-3개 영역]
+
+---
+
 ## 📌 권장 액션 플랜
 1. **[즉시]** ...
 2. **[이번 PR]** ...
 3. **[다음 스프린트]** ...
 
 ---
-🤖 *Generated by Chicago Code Review (Multi-Agent: Architect · Security · Performance · QA · Craftsman · DevOps)*
+🤖 *Generated by Chicago Code Review (Multi-Agent: Architect · Security · Performance · QA · Craftsman · DevOps · CodeRabbit)*
+📋 *오케스트레이터가 최종 검증 완료*
 ```
 
 ---
