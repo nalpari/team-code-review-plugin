@@ -1,16 +1,15 @@
 # Chicago Code Review
 
-Multi-agent code review plugin with 6+ expert personas analyzing code in parallel.
+Multi-agent code review plugin with 5+ expert personas analyzing code in parallel.
 
 ## Features
 
-- **6 Core Expert Personas** analyzing code simultaneously:
-  - **🏗️ Architect**: SOLID principles, coupling, cohesion, layer dependencies
+- **5 Core Expert Personas** analyzing code simultaneously:
   - **🔒 Security Engineer**: OWASP Top 10, auth/authz, input validation, secrets exposure
   - **⚡ Performance Engineer**: N+1 queries, memory leaks, algorithmic complexity, caching
   - **🧪 QA Engineer**: Edge cases, null handling, test coverage, idempotency
   - **📖 Code Craftsman**: Naming, readability, DRY, Clean Code principles
-  - **🔄 DevOps Engineer**: Logging, monitoring, deployment safety, rollback capability
+  - **🐰 CodeRabbit Reviewer**: AI-powered pattern-based code analysis
 - **4 Optional Personas** (auto-activated by code context):
   - **💰 Business Analyst**: Domain logic accuracy, ubiquitous language
   - **🌐 Frontend Expert**: API contract changes, TypeScript types, UX states
@@ -54,7 +53,7 @@ Phase 0: Collect Code Input (PR diff / file / snippet)
     ↓
 Phase 1: Orchestrator Context Analysis & Role Selection
     ↓
-Phase 2: Parallel Subagent Execution (6-10 experts)
+Phase 2: Parallel Subagent Execution (5-9 experts)
     ↓
 Phase 3: Collect Results
     ↓
@@ -71,7 +70,7 @@ Phase 7: Cleanup
 
 | Feature | team-code-review | montreal-code-review | chicago-code-review |
 |---------|-----------------|---------------------|---------------------|
-| Expert personas | 2 | 4 | 6 core + 4 optional |
+| Expert personas | 2 | 4 | 5 core + 4 optional |
 | Agent architecture | Subagents | Team agents (tmux) | Subagents (no tmux) |
 | Discussion rounds | Cross-check agents | Leader-reviewer dialogue | Orchestrator synthesis |
 | Trade-off analysis | No | No | Yes |

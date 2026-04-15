@@ -2,10 +2,10 @@
 name: chicago-code-review
 description: >
   멀티 에이전트를 활용해 다양한 전문가 역할의 시각으로 코드를 종합 리뷰하는 스킬.
-  PR 코드, diff, 파일 단위 코드를 입력받아 아키텍트·시큐리티·퍼포먼스·QA·코드품질·DevOps·CodeRabbit
+  PR 코드, diff, 파일 단위 코드를 입력받아 시큐리티·퍼포먼스·QA·코드품질·CodeRabbit
   등 복수의 전문가 페르소나가 병렬로 분석하고, 오케스트레이터가 최종 검증·필터링 후 통합 리포트를 생성한다.
   "코드 리뷰해줘", "PR 리뷰", "이 코드 점검해줘", "멀티 관점으로 리뷰" 등
-  코드 품질·안전성·성능·운영 안정성에 대한 종합 검토 요청이 들어오면 항상 이 스킬을 사용한다.
+  코드 품질·안전성·성능에 대한 종합 검토 요청이 들어오면 항상 이 스킬을 사용한다.
   단순 코드 설명이나 단일 이슈 질문에는 사용하지 않는다.
 ---
 
@@ -27,13 +27,12 @@ description: >
   - 활성화할 역할 선택
   - 공통 컨텍스트 패키징
         │
-        ├──▶ 🏗️ Architect      ─┐
-        ├──▶ 🔒 Security       ─┤
+        ├──▶ 🔒 Security       ─┐
         ├──▶ ⚡ Performance    ─┤
         ├──▶ 🧪 QA Engineer    ─┼──▶ [오케스트레이터] 결과 통합 & 최종 검증
         ├──▶ 📖 Craftsman      ─┤       │
-        ├──▶ 🔄 DevOps         ─┤       ▼
-        └──▶ 🐰 CodeRabbit     ─┘  최종 리뷰 리포트
+        └──▶ 🐰 CodeRabbit     ─┘       ▼
+                                    최종 리뷰 리포트
 ```
 
 ---
@@ -85,26 +84,24 @@ PR이 아닌 파일 경로나 코드 스니펫이 제공된 경우:
 
 ### 1-2. 역할 선택
 
-기본 6개 역할은 항상 활성화한다:
+기본 5개 역할은 항상 활성화한다:
 
 | # | 역할 | 항상 활성화 |
 |---|------|:-----------:|
-| 1 | 🏗️ Architect | ✅ |
-| 2 | 🔒 Security Engineer | ✅ |
-| 3 | ⚡ Performance Engineer | ✅ |
-| 4 | 🧪 QA Engineer | ✅ |
-| 5 | 📖 Code Craftsman | ✅ |
-| 6 | 🔄 DevOps Engineer | ✅ |
-| 7 | 🐰 CodeRabbit Reviewer | ✅ |
+| 1 | 🔒 Security Engineer | ✅ |
+| 2 | ⚡ Performance Engineer | ✅ |
+| 3 | 🧪 QA Engineer | ✅ |
+| 4 | 📖 Code Craftsman | ✅ |
+| 5 | 🐰 CodeRabbit Reviewer | ✅ |
 
 선택적 역할은 코드 성격에 따라 자동 활성화한다:
 
 | # | 역할 | 활성화 조건 |
 |---|------|------------|
-| 8 | 💰 Business Analyst | 도메인 로직이 복잡한 코드 (ERP, 커머스, 정산, 재고 등) |
-| 9 | 🌐 Frontend Expert | API 계약 변경, 프론트엔드 연동 영향이 있는 코드 |
-| 10 | 📊 Data Steward | DB 스키마 변경, 마이그레이션, 대용량 데이터 처리 |
-| 11 | 👶 Junior Developer | 팀 온보딩 코드, 핵심 비즈니스 로직, 복잡한 알고리즘 |
+| 6 | 💰 Business Analyst | 도메인 로직이 복잡한 코드 (ERP, 커머스, 정산, 재고 등) |
+| 7 | 🌐 Frontend Expert | API 계약 변경, 프론트엔드 연동 영향이 있는 코드 |
+| 8 | 📊 Data Steward | DB 스키마 변경, 마이그레이션, 대용량 데이터 처리 |
+| 9 | 👶 Junior Developer | 팀 온보딩 코드, 핵심 비즈니스 로직, 복잡한 알고리즘 |
 
 사용자가 특정 역할만 지정한 경우(예: "Security와 Performance 관점으로만 리뷰해줘"), 지정된 역할만 활성화한다.
 
@@ -156,41 +153,7 @@ PR이 아닌 파일 경로나 코드 스니펫이 제공된 경우:
 
 ### 역할별 프롬프트 상세
 
-#### 🏗️ 1. Architect (The Architect)
-
-```
-Agent(
-  name: "architect",
-  model: "sonnet",
-  prompt: "당신은 The Architect입니다. Research-only — 파일을 수정하지 마세요.
-
-  페르소나: 15년 경력의 시스템 설계 전문가. 마틴 파울러의 Refactoring과 Clean Architecture를
-  항상 곁에 두고 있다. 코드 한 줄보다 코드가 만들어내는 구조를 먼저 본다.
-
-  [공통 컨텍스트]
-
-  다음 관점에서만 분석하세요:
-  - SOLID 원칙 준수 여부 (단일 책임, 개방-폐쇄, 리스코프 치환, 인터페이스 분리, 의존 역전)
-  - 레이어 간 의존성 방향 (도메인 → 인프라 침범 등)
-  - 모듈 응집도(Cohesion)와 결합도(Coupling) 평가
-  - 도메인 경계 침범 여부 (Bounded Context 관점)
-  - 추상화 수준 일관성
-
-  핵심 질문:
-  - '이 클래스가 두 가지 이상의 이유로 변경될 수 있는가?'
-  - '인터페이스 역전이 필요한 지점은 어디인가?'
-  - '이 구조가 요구사항 변화에 어떻게 반응하는가?'
-
-  아웃풋:
-  - 설계 문제점 + 근거 (원칙 위반 명시)
-  - 리팩토링 방향성 (구체적인 패턴 이름 포함)
-  - 선택적: 간단한 대안 구조 의사코드
-  - 잘된 점 1-2개
-  - 결과를 /tmp/chicago-review-architect-findings.txt에 저장"
-)
-```
-
-#### 🔒 2. Security Engineer (The Guardian)
+#### 🔒 1. Security Engineer (The Guardian)
 
 ```
 Agent(
@@ -225,7 +188,7 @@ Agent(
 )
 ```
 
-#### ⚡ 3. Performance Engineer (The Optimizer)
+#### ⚡ 2. Performance Engineer (The Optimizer)
 
 ```
 Agent(
@@ -261,7 +224,7 @@ Agent(
 )
 ```
 
-#### 🧪 4. QA Engineer (The Skeptic)
+#### 🧪 3. QA Engineer (The Skeptic)
 
 ```
 Agent(
@@ -296,7 +259,7 @@ Agent(
 )
 ```
 
-#### 📖 5. Code Craftsman (The Craftsman)
+#### 📖 4. Code Craftsman (The Craftsman)
 
 ```
 Agent(
@@ -331,42 +294,7 @@ Agent(
 )
 ```
 
-#### 🔄 6. DevOps Engineer (The Operator)
-
-```
-Agent(
-  name: "devops",
-  model: "sonnet",
-  prompt: "당신은 The Operator입니다. Research-only — 파일을 수정하지 마세요.
-
-  페르소나: 새벽 3시 장애 대응 경험자. 코드를 볼 때 항상 '이게 배포 후 장애 나면
-  원인을 찾을 수 있는가?'를 먼저 생각한다.
-
-  [공통 컨텍스트]
-
-  다음 관점에서만 분석하세요:
-  - 로깅의 충분성 (레벨 적절성, 추적 가능한 컨텍스트 포함 여부)
-  - 모니터링 포인트 (메트릭 수집, 알람 연결 가능성)
-  - 환경변수 / 설정값 관리 (하드코딩, 환경 간 분리)
-  - 트랜잭션 경계 설계 (롤백 가능 여부)
-  - 배포 중 무중단 여부 (스키마 변경 호환성 등)
-  - 장애 시 복구 절차 가능성
-
-  핵심 질문:
-  - '장애 발생 시 이 로그만으로 원인을 찾을 수 있는가?'
-  - '이 DB 스키마 변경이 배포 중 서비스 중단을 유발하는가?'
-  - '이 기능이 비활성화되어야 할 때 Feature Flag로 제어 가능한가?'
-
-  아웃풋:
-  - 운영 위험도 평가 (심각도 레이블 포함)
-  - 추가 필요한 로그 포인트 (코드 예시)
-  - 배포 전 체크리스트 항목
-  - 잘된 점 1-2개
-  - 결과를 /tmp/chicago-review-devops-findings.txt에 저장"
-)
-```
-
-#### 🐰 7. CodeRabbit Reviewer (The AI Auditor)
+#### 🐰 5. CodeRabbit Reviewer (The AI Auditor)
 
 ```
 Agent(
@@ -375,7 +303,7 @@ Agent(
   prompt: "당신은 CodeRabbit AI 리뷰어입니다. Research-only — 파일을 수정하지 마세요.
 
   이 코드 변경 사항에 대해 CodeRabbit의 AI 코드 리뷰를 수행하세요.
-  다른 전문가 에이전트(Architect, Security, Performance 등)가 동시에 리뷰 중이므로,
+  다른 전문가 에이전트(Security, Performance, QA 등)가 동시에 리뷰 중이므로,
   CodeRabbit 고유의 패턴 기반 분석에 집중하세요.
 
   **SCOPE**: 리뷰는 반드시 이 PR diff에서 추가(+) 또는 수정된 라인에만 집중하세요.
@@ -405,7 +333,7 @@ Agent(
 
 선택적 역할이 활성화된 경우, 동일한 패턴으로 추가 서브에이전트를 함께 병렬 실행한다.
 
-#### 💰 8. Business Analyst (The Translator)
+#### 💰 6. Business Analyst (The Translator)
 
 ```
 Agent(
@@ -427,7 +355,7 @@ Agent(
 )
 ```
 
-#### 🌐 9. Frontend Expert (The UX Guardian)
+#### 🌐 7. Frontend Expert (The UX Guardian)
 
 ```
 Agent(
@@ -449,7 +377,7 @@ Agent(
 )
 ```
 
-#### 📊 10. Data Steward
+#### 📊 8. Data Steward
 
 ```
 Agent(
@@ -471,7 +399,7 @@ Agent(
 )
 ```
 
-#### 👶 11. Junior Developer (The Learner)
+#### 👶 9. Junior Developer (The Learner)
 
 ```
 Agent(
@@ -498,12 +426,10 @@ Agent(
 
 모든 서브에이전트가 완료될 때까지 대기한다. 서브에이전트는 포그라운드로 실행되므로 모든 결과가 직접 반환된다. 추가로 각 에이전트가 저장한 파일도 읽는다:
 
-- `/tmp/chicago-review-architect-findings.txt`
 - `/tmp/chicago-review-security-findings.txt`
 - `/tmp/chicago-review-performance-findings.txt`
 - `/tmp/chicago-review-qa-findings.txt`
 - `/tmp/chicago-review-craftsman-findings.txt`
-- `/tmp/chicago-review-devops-findings.txt`
 - `/tmp/chicago-review-coderabbit-findings.txt`
 - (선택적) `/tmp/chicago-review-business-findings.txt`
 - (선택적) `/tmp/chicago-review-frontend-findings.txt`
@@ -524,7 +450,7 @@ Agent(
 
 에이전트 간 상반된 의견이 있는 경우 트레이드오프 섹션에 정리한다.
 
-예: "Architect는 레이어 분리를 권고하지만, Performance는 직접 쿼리가 효율적이라 함
+예: "Craftsman은 메서드 분리를 권고하지만, Performance는 직접 쿼리가 효율적이라 함
 → 현재 트래픽 규모에서는 가독성 우선, 성능 이슈 시 캐시 계층 추가 권장"
 
 ### 4-3. 오케스트레이터 최종 검증 (Final Validation)
@@ -650,9 +576,6 @@ rm -f /tmp/chicago-review-*.txt
 
 ## 🔍 에이전트별 상세 리뷰
 
-### 🏗️ Architect 관점
-{Architect 에이전트의 상세 분석 결과}
-
 ### 🔒 Security 관점
 {Security 에이전트의 상세 분석 결과}
 
@@ -664,9 +587,6 @@ rm -f /tmp/chicago-review-*.txt
 
 ### 📖 Craftsman 관점
 {Craftsman 에이전트의 상세 분석 결과}
-
-### 🔄 DevOps 관점
-{DevOps 에이전트의 상세 분석 결과}
 
 ### 🐰 CodeRabbit 관점
 {CodeRabbit 에이전트의 AI 패턴 분석 결과}
@@ -702,7 +622,7 @@ rm -f /tmp/chicago-review-*.txt
 3. **[다음 스프린트]** ...
 
 ---
-🤖 *Generated by Chicago Code Review (Multi-Agent: Architect · Security · Performance · QA · Craftsman · DevOps · CodeRabbit)*
+🤖 *Generated by Chicago Code Review (Multi-Agent: Security · Performance · QA · Craftsman · CodeRabbit)*
 📋 *오케스트레이터가 최종 검증 완료*
 ```
 

@@ -22,7 +22,7 @@
     },
     {
       "name": "chicago-code-review",
-      "description": "Multi-agent code review with 7+ expert personas (Architect, Security, Performance, QA, Craftsman, DevOps, CodeRabbit) analyzing code in parallel. Orchestrator validates and filters findings before producing unified report with severity-based prioritization.",
+      "description": "Multi-agent code review with 5+ expert personas (Security, Performance, QA, Craftsman, CodeRabbit) analyzing code in parallel. Orchestrator validates and filters findings before producing unified report with severity-based prioritization.",
       "source": "./plugins/chicago-code-review",
       "category": "development",
       "homepage": "https://github.com/nalpari/team-code-review-plugin"
