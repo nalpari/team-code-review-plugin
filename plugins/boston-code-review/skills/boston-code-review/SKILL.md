@@ -82,10 +82,10 @@ PR이 아닌 파일 경로나 코드 스니펫이 제공된 경우:
 | 전문가 | 활성화 조건 |
 |---|---|
 | 🔒 **Security** | 경로에 `auth`, `login`, `jwt`, `token`, `crypto`, `password`, `security`, `middleware`, `cors`, `csrf` 포함 / 키워드 `hash`, `encrypt`, `decrypt`, `sign`, `verify`, `secret`, `sanitize`, `escape`, `permission`, `role` 변경 / 환경변수·시크릿 파일 변경 |
-| ⚡ **Performance** | 경로에 `repository`, `service`, `query`, `dao` 포함 AND 반복문/쿼리 변경 / 키워드 `SELECT`, `JOIN`, `forEach`, `for (`, `while (`, `N+1`, `cache`, `await` 다수 / 100줄 이상 단일 함수 변경 |
+| ⚡ **Performance** | (경로에 `repository`, `service`, `query`, `dao` 포함 AND 반복문/쿼리 변경) / 키워드 `SELECT`, `JOIN`, `forEach`, `for (`, `while (`, `N+1`, `cache` 변경 / 반복문 내부 `await` 또는 `Promise.all(`, `for await` 패턴 / 100줄 이상 단일 함수 변경 |
 | 📊 **Data Steward** | 경로에 `migration`, `schema`, `prisma`, `sequelize`, `alembic`, `flyway`, `*.sql` 포함 / 키워드 `ALTER TABLE`, `DROP`, `CREATE INDEX`, `nullable`, `constraint`, `@Entity`, `@Column` 변경 |
 | 💰 **Business Analyst** | 경로에 `domain/`, `usecase/`, `order`, `payment`, `billing`, `inventory`, `settlement`, `tax`, `discount`, `calculation` 포함 / 키워드 `BigDecimal`, `Money`, `Amount`, `calculate`, `compute`, 조건분기 3중 이상 |
-| 🌐 **Frontend Expert** | 경로에 `controller`, `api/`, `routes/`, `*.dto.ts`, `*.schema.ts` 포함 AND 응답/요청 스펙 변경 / 키워드 `ResponseEntity`, `DTO`, `interface`, `type ` 변경 / OpenAPI·GraphQL 스키마 파일 변경 |
+| 🌐 **Frontend Expert** (API 계약 관점) | (경로에 `controller`, `api/`, `routes/`, `*.dto.ts`, `*.schema.ts` 포함 AND 응답/요청 스펙 변경) / 키워드 `ResponseEntity`, `DTO`, `interface`, `type ` 변경 / OpenAPI·GraphQL 스키마 파일 변경 |
 
 감지된 전문가 목록과 매칭 근거(어느 파일/키워드로 발화했는지)를 1줄로 기록한다.
 
@@ -108,10 +108,14 @@ PR이 아닌 파일 경로나 코드 스니펫이 제공된 경우:
 
 활성화된 에이전트를 하나의 메시지에서 동시에 호출한다(`Agent` 도구 병렬). 모든 에이전트는 research-only — 파일 수정 금지.
 
+**공통 컨텍스트 치환**: 각 전문가 에이전트 프롬프트의 `[공통 컨텍스트]` 자리에는 Phase 1-4에서 패키징한 4개 항목(PR 제목·설명, 필터링된 diff, 언어/프레임워크/도메인, 감지된 전문가 목록과 매칭 근거)을 그대로 삽입한다.
+
 **선택적 파일 I/O:**
 
 - 필터 후 diff ≤ 1500줄: 각 에이전트는 반환값으로만 결과 전달
 - 필터 후 diff > 1500줄: 각 에이전트가 `/tmp/boston-review-{agent}-findings.txt`에 결과 기록. 오케스트레이터가 Phase 3 시작 시 모두 읽음
+
+**전문가 에이전트 공통 템플릿**: Security·Performance·Data Steward·Business·Frontend 5개 전문가 에이전트는 모두 동일한 프롬프트 구조(`페르소나 → [공통 컨텍스트] → **SCOPE** → **관점** → **출력**`)를 따른다. CodeRabbit은 별도 subagent_type을 사용하므로 구조가 다르다.
 
 각 에이전트는 자신 담당 관점에만 집중하고 다른 관점(보안, 성능 등) 코멘트는 금지.
 
