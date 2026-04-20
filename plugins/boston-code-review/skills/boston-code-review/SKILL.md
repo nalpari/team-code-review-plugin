@@ -319,12 +319,17 @@ Agent(
 
 ## Phase 4: 사용자 확인 (PR 리뷰)
 
-PR 코멘트로 게시하기 전 사용자에게 확인 요청:
+리포트를 먼저 **파일로 저장**한 뒤 게시 여부를 묻는다. 셸 이스케이프(백틱·따옴표 이중 escape) 로 인한 렌더 깨짐을 방지하기 위함.
+
+1. `Write` 도구로 리포트를 `/tmp/boston-review-report.md`에 저장한다.
+   - 마크다운 원문을 **있는 그대로** 기록한다. 백틱(`` ` ``), 큰따옴표(`"`), 달러(`$`), 백슬래시(`\`)를 **절대 이스케이프하지 말 것**. `--body-file`은 파일 내용을 그대로 업로드하므로 셸 해석이 없다.
+   - 코드 블록은 표준 펜스(``` ```ts ```)로 작성하고, 리스트 항목 내부에 둘 때는 펜스를 블록 바로 다음 줄부터 시작한다(펜스와 텍스트를 같은 줄에 붙이지 않는다).
+2. 저장 후 사용자에게 확인 요청:
 
 ```
-리뷰 결과가 준비되었습니다. 아래 내용을 PR 코멘트로 게시할까요?
+리뷰 결과를 /tmp/boston-review-report.md에 저장했습니다. PR 코멘트로 게시할까요?
 
-[리포트 표시]
+[리포트 본문 표시]
 
 - 'yes' 또는 '게시': PR 코멘트 게시
 - 'edit' 또는 '수정': 수정 부분 지시
@@ -332,7 +337,7 @@ PR 코멘트로 게시하기 전 사용자에게 확인 요청:
 ```
 
 - yes/게시 → Phase 5 진행
-- edit/수정 → 수정 후 다시 확인
+- edit/수정 → 파일을 수정(`Edit` 도구)하고 다시 확인
 - no/취소 → Phase 5 건너뛰고 Phase 6(정리)로
 
 파일/스니펫 리뷰는 Phase 4~5를 건너뛰고 리포트를 직접 출력한다.
@@ -341,11 +346,10 @@ PR 코멘트로 게시하기 전 사용자에게 확인 요청:
 
 ## Phase 5: PR 코멘트 게시
 
+Phase 4에서 저장한 파일을 `--body-file`로 업로드한다. **HEREDOC이나 `--body "..."` 인라인 문자열을 사용하지 말 것** — 셸 따옴표 중첩 때문에 백틱·따옴표가 이스케이프되어 코드 블록이 ``` \`\`\`ts ``` 처럼 그대로 보이는 증상이 발생한다.
+
 ```bash
-gh pr comment <PR_NUMBER> --repo <OWNER/REPO> --body "$(cat <<'COMMENT_EOF'
-<review content>
-COMMENT_EOF
-)"
+gh pr comment <PR_NUMBER> --repo <OWNER/REPO> --body-file /tmp/boston-review-report.md
 ```
 
 ---
@@ -353,7 +357,7 @@ COMMENT_EOF
 ## Phase 6: 임시 파일 정리
 
 ```bash
-rm -f /tmp/boston-review-*.txt
+rm -f /tmp/boston-review-*.txt /tmp/boston-review-report.md
 ```
 
 ---
