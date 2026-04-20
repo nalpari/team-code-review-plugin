@@ -26,6 +26,13 @@
       "source": "./plugins/chicago-code-review",
       "category": "development",
       "homepage": "https://github.com/nalpari/team-code-review-plugin"
+    },
+    {
+      "name": "boston-code-review",
+      "description": "Lightweight multi-agent code review with CodeRabbit baseline + up to 5 auto-detected specialists (Security, Performance, Data Steward, Business Analyst, Frontend). Token-efficient alternative to chicago-code-review; activates specialists only when diff patterns match.",
+      "source": "./plugins/boston-code-review",
+      "category": "development",
+      "homepage": "https://github.com/nalpari/team-code-review-plugin"
     }
   ]
 }
