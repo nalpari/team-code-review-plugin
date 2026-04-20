@@ -28,9 +28,14 @@ Multi-agent code review plugin with 5+ expert personas analyzing code in paralle
 
 ## Installation
 
-```bash
-claude plugin add https://github.com/nalpari/team-code-review-plugin.git --name chicago-code-review
+Claude Code 세션 내에서 다음 슬래시 명령을 실행하세요:
+
+```text
+/plugin marketplace add https://github.com/nalpari/team-code-review-plugin.git
+/plugin install chicago-code-review@nalpari-plugins
 ```
+
+> 참고: `nalpari-plugins`는 이 저장소의 `.claude-plugin/marketplace.json`에 정의된 marketplace 이름입니다.
 
 ## Usage
 

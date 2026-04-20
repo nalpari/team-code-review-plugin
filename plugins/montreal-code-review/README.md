@@ -22,10 +22,14 @@ Multi-agent team code review plugin with 3 specialized reviewers orchestrated by
 
 ## Installation
 
-```bash
-claude plugin marketplace add https://github.com/nalpari/team-code-review-plugin.git
-claude plugin install montreal-code-review
+Claude Code 세션 내에서 다음 슬래시 명령을 실행하세요:
+
+```text
+/plugin marketplace add https://github.com/nalpari/team-code-review-plugin.git
+/plugin install montreal-code-review@nalpari-plugins
 ```
+
+> 참고: `nalpari-plugins`는 이 저장소의 `.claude-plugin/marketplace.json`에 정의된 marketplace 이름입니다.
 
 ## Usage
 
