@@ -1,0 +1,9 @@
+{
+  "name": "boston-code-review",
+  "description": "Lightweight multi-agent code review with CodeRabbit baseline + up to 5 auto-detected specialists (Security, Performance, Data Steward, Business Analyst, Frontend). Orchestrator activates specialists only when diff patterns match, reducing token cost by ~80% on small PRs while preserving coverage on complex changes.",
+  "version": "1.0.0",
+  "author": {
+    "name": "nalpari",
+    "url": "https://github.com/nalpari"
+  }
+}
