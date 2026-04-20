@@ -112,10 +112,10 @@ PR이 아닌 파일 경로나 코드 스니펫이 제공된 경우:
 
 **선택적 파일 I/O:**
 
-- 필터 후 diff ≤ 1500줄: 각 에이전트는 반환값으로만 결과 전달
-- 필터 후 diff > 1500줄: 각 에이전트가 `/tmp/boston-review-{agent}-findings.txt`에 결과 기록. 오케스트레이터가 Phase 3 시작 시 모두 읽음
+- 필터 후 diff ≤ 1500줄: 각 에이전트는 반환값으로만 결과 전달. 프롬프트에 파일 저장 지시를 포함하지 않는다.
+- 필터 후 diff > 1500줄: 각 에이전트 프롬프트 말미에 `결과를 /tmp/boston-review-<agent-id>-findings.txt에 저장하세요.` 문장을 추가한다. `<agent-id>`는 `coderabbit`, `security`, `performance`, `data`, `business`, `frontend` 중 하나. 오케스트레이터가 Phase 3 시작 시 모두 읽음.
 
-**전문가 에이전트 공통 템플릿**: Security·Performance·Data Steward·Business·Frontend 5개 전문가 에이전트는 모두 동일한 프롬프트 구조(`페르소나 → [공통 컨텍스트] → **SCOPE** → **관점** → **출력**`)를 따른다. CodeRabbit은 별도 subagent_type을 사용하므로 구조가 다르다.
+**공통 템플릿**: 5개 전문가 에이전트는 2-2 Security와 동일한 프롬프트 구조를 따른다. CodeRabbit은 `subagent_type: "coderabbit:code-reviewer"`를 사용하므로 구조가 다르다.
 
 각 에이전트는 자신 담당 관점에만 집중하고 다른 관점(보안, 성능 등) 코멘트는 금지.
 
@@ -143,8 +143,7 @@ Agent(
   **출력 형식**:
   - 각 이슈는 심각도 🔴🟠🟡🟢 + 파일:라인 + 설명 + 개선안
   - 이슈가 없으면 '✅ 이상 없음'
-  - 총 이슈 수 요약
-  [large diff 모드면: /tmp/boston-review-coderabbit-findings.txt에 저장]"
+  - 총 이슈 수 요약"
 )
 ```
 
@@ -171,8 +170,7 @@ Agent(
 
   **출력**:
   - 심각도 🔴🟠🟡🟢 + 위치 + 공격 시나리오 1줄 + 수정 가이드
-  - 잘된 점 1~2개
-  [large diff 모드면: /tmp/boston-review-security-findings.txt에 저장]"
+  - 잘된 점 1~2개"
 )
 ```
 
@@ -200,8 +198,7 @@ Agent(
   **출력**:
   - 병목 지점 + Big-O 분석 (가능 시)
   - 개선 전/후 코드, 예상 효과
-  - 잘된 점 1~2개
-  [large diff 모드면: /tmp/boston-review-performance-findings.txt에 저장]"
+  - 잘된 점 1~2개"
 )
 ```
 
@@ -227,8 +224,7 @@ Agent(
 
   **출력**:
   - 위험 항목 + 롤백 방안
-  - 잘된 점 1~2개
-  [large diff 모드면: /tmp/boston-review-data-findings.txt에 저장]"
+  - 잘된 점 1~2개"
 )
 ```
 
@@ -253,8 +249,7 @@ Agent(
 
   **출력**:
   - 불일치 지점 + 근거 + 보정 제안
-  - 잘된 점 1~2개
-  [large diff 모드면: /tmp/boston-review-business-findings.txt에 저장]"
+  - 잘된 점 1~2개"
 )
 ```
 
@@ -279,8 +274,7 @@ Agent(
 
   **출력**:
   - 영향 항목 + 연동 리스크 + 방어 코드 제안
-  - 잘된 점 1~2개
-  [large diff 모드면: /tmp/boston-review-frontend-findings.txt에 저장]"
+  - 잘된 점 1~2개"
 )
 ```
 
